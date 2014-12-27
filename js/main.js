@@ -44,3 +44,25 @@ function changeMap(){
 	if(id == 'left') map.pan(30, 0);
 	if(id == 'right') map.pan(-30, 0);
 }
+
+
+$('#map-container').on('mousedown', function(event){
+	$(this).css('cursor', 'move');
+	var mouseX = event.offsetX;
+	var mouseY = event.offsetY;
+	$(this).on('mousemove', function(event){
+		var currentX = event.offsetX;
+		var currentY = event.offsetY;
+		var changeX = currentX-mouseX;
+		var changeY = currentY-mouseY;
+		map.pan(changeX, changeY);
+		mouseX = currentX;
+		mouseY = currentY;
+	});
+})
+
+$('#map-container').on('mouseup mouseleave', function(){
+	console.log("I'M OUTTA HERE")
+	$(this).css('cursor', '');
+	$(this).unbind('mousemove');
+});

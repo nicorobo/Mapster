@@ -12,12 +12,14 @@ Mapster.prototype = {
 		this.matrix[5]+= dy;
 		this.apply();
 	},
-	zoom: function(factor){
+	zoom: function(factor, posX, posY){
 		for(var i=0; i<this.matrix.length; i++){
 			this.matrix[i]*=factor;
 		}
-		this.matrix[4]+= (1-factor)*this.width/2;
-		this.matrix[5]+= (1-factor)*this.height/2;
+		posX = posX || this.width/2;
+		posY = posY || this.height/2;
+		this.matrix[4]+= (1-factor)*posX;
+		this.matrix[5]+= (1-factor)*posY;
 		this.apply();
 	},
 	reset: function(){
@@ -44,7 +46,13 @@ function changeMap(){
 	if(id == 'left') map.pan(30, 0);
 	if(id == 'right') map.pan(-30, 0);
 }
+var mouseMapX = '';
+var mouseMapY = '';
 
+$('#map-container').on('mousemove', function(event){
+	mouseMapX = event.offsetX;
+	mouseMapY = event.offsetY;
+});
 
 $('#map-container').on('mousedown', function(event){
 	$(this).css('cursor', 'move');
@@ -62,7 +70,12 @@ $('#map-container').on('mousedown', function(event){
 })
 
 $('#map-container').on('mouseup mouseleave', function(){
-	console.log("I'M OUTTA HERE")
 	$(this).css('cursor', '');
 	$(this).unbind('mousemove');
+});
+
+$('#map-container').on('mousewheel', function(event){
+	var zoomIn = event.deltaY == 1;
+	if(zoomIn) map.zoom(10/9, mouseMapX, mouseMapY);
+	else map.zoom(9/10, mouseMapX, mouseMapY);
 });

@@ -37,8 +37,8 @@ $('#controls').on('click', '.control', changeMap);
 function changeMap(){
 	var id = $(this).attr('id');
 	if(id == 'reset') map.reset();
-	if(id == 'zoomIn') map.zoom(1.5);
-	if(id == 'zoomOut') map.zoom(0.5);
+	if(id == 'zoomIn') map.zoom(3/2);
+	if(id == 'zoomOut') map.zoom(2/3);
 	if(id == 'up') map.pan(0, 30);
 	if(id == 'down') map.pan(0, -30);
 	if(id == 'left') map.pan(30, 0);

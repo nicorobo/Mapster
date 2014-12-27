@@ -1,0 +1,28 @@
+body{
+	margin:0;
+	padding:0;
+}
+#controls{
+	background:rgba(20, 20, 20, 0.5);
+	border-radius: 0px 0px 10px 10px;
+	position:fixed;
+	top:0;
+	width:400px;
+	text-align:center;
+	left:50%;
+	height:40px;
+	margin-left:-200px;
+}
+.control{
+	cursor: pointer;
+	border-radius: 5px;
+	border: none;
+	outline:none;
+	padding:5px;
+	font-size: 15px;
+	margin:5px 5px 0 5px;
+	transition:0.1s;
+}
+.control:hover{
+	background:lightblue;
+}

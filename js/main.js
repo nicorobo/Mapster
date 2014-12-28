@@ -48,34 +48,33 @@ function changeMap(){
 }
 var mouseMapX = '';
 var mouseMapY = '';
+var pastMouseMapX = '';
+var pastMouseMapY = '';
+var dragging = false;
 
 $('#map-container').on('mousemove', function(event){
 	mouseMapX = event.offsetX;
 	mouseMapY = event.offsetY;
+	if(dragging){
+		var changeX = mouseMapX-pastMouseMapX;
+		var changeY = mouseMapY-pastMouseMapY;
+		map.pan(changeX, changeY);
+	}
+	pastMouseMapX = mouseMapX;
+	pastMouseMapY = mouseMapY;
 });
 
 $('#map-container').on('mousedown', function(event){
 	$(this).css('cursor', 'move');
-	var mouseX = event.offsetX;
-	var mouseY = event.offsetY;
-	$(this).on('mousemove', function(event){
-		var currentX = event.offsetX;
-		var currentY = event.offsetY;
-		var changeX = currentX-mouseX;
-		var changeY = currentY-mouseY;
-		map.pan(changeX, changeY);
-		mouseX = currentX;
-		mouseY = currentY;
-	});
-})
+	dragging=true;
+});
 
 $('#map-container').on('mouseup mouseleave', function(){
 	$(this).css('cursor', '');
-	$(this).unbind('mousemove');
+	dragging=false;
 });
 
 $('#map-container').on('mousewheel', function(event){
-	var zoomIn = event.deltaY == 1;
-	if(zoomIn) map.zoom(10/9, mouseMapX, mouseMapY);
-	else map.zoom(9/10, mouseMapX, mouseMapY);
+	if(event.deltaY == 1) map.zoom(10/9, mouseMapX, mouseMapY); //Zoom in
+	else map.zoom(9/10, mouseMapX, mouseMapY); //Zoom out
 });

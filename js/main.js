@@ -18,8 +18,10 @@ Mapster.prototype = {
 		}
 		posX = posX || this.width/2;
 		posY = posY || this.height/2;
-		this.matrix[4]+= (1-factor)*posX;
-		this.matrix[5]+= (1-factor)*posY;
+		console.log('posX '+posX);
+		console.log('posY '+posY);
+		this.matrix[4]+= (1-factor)*posX*3;
+		this.matrix[5]+= (1-factor)*posY*3;
 		this.apply();
 	},
 	reset: function(){
@@ -56,8 +58,8 @@ $('#map-container').on('mousemove', function(event){
 	mouseMapX = event.offsetX;
 	mouseMapY = event.offsetY;
 	if(dragging){
-		var changeX = mouseMapX-pastMouseMapX;
-		var changeY = mouseMapY-pastMouseMapY;
+		var changeX = (mouseMapX-pastMouseMapX)*2;
+		var changeY = (mouseMapY-pastMouseMapY)*2;
 		map.pan(changeX, changeY);
 	}
 	pastMouseMapX = mouseMapX;

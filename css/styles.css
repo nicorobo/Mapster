@@ -27,8 +27,8 @@ body{
 	background:lightblue;
 }
 #map-container{
-	width:800px;
-	margin:0 auto;
+	width:300px;
+	margin: 0 auto;
 	margin-top:50px;
 	border: 1px solid black;
 	overflow: visible;

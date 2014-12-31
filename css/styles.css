@@ -27,11 +27,12 @@ body{
 	background:lightblue;
 }
 #map-container{
-	width:300px;
+	width:500px;
 	margin: 0 auto;
 	margin-top:50px;
 	border: 1px solid black;
 	overflow: visible;
+	box-sizing: content-box;
 }
 .street{
 	fill:#f1f1f1;

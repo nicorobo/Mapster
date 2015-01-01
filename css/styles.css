@@ -50,3 +50,14 @@ body{
 .park{
 	fill:lightgreen;
 }
+.grid-square{
+	fill: transparent;
+	stroke: #eee;
+	stroke-width: 0.5;
+}
+.grid-square:hover{
+	fill:rgba(250,128,114, 0.7);
+}
+#svg-background{
+	fill:white;
+}

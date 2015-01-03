@@ -9,19 +9,25 @@ body{
 	height:500px;
 	width: 150px;
 	z-index: 200;
+	top: 30px;
+	left: 30px;
+	overflow: visible !important;
+}
+#control-handle{
+	float: right;
+	height:20px;
+	width:20px;
+	border-radius: 100%;
+	background: salmon;
+	margin-right: -10px;
+	margin-top: -10px;
+}
+#control-handle:hover{
+	background: lightgreen;
+	cursor: move;
 }
 .control{
-	cursor: pointer;
-	border-radius: 5px;
-	border: none;
-	outline:none;
-	padding:5px;
-	font-size: 15px;
-	margin:5px 5px 0 5px;
-	transition:0.1s;
-}
-.control:hover{
-	background:lightblue;
+	margin-top:20px;
 }
 /*#map-container{
 	width:500px;
@@ -58,7 +64,7 @@ svg {
 }
 .grid-square{
 	fill: transparent;
-	stroke: #eee;
+	stroke: rgba(238,238,238, 0.6);
 	stroke-width: 0.5;
 }
 .grid-square:hover{

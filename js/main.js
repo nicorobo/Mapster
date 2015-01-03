@@ -7,6 +7,7 @@ function createMap(mapdata){
 	var Mapster = function(map, snap){
 		this.g = map;
 		this.s = snap;
+		this.gridSet = this.g.group();
 		this.bounding = this.g.getBBox();
 		this.width = this.bounding.width;
 		this.height = this.bounding.height;
@@ -27,26 +28,51 @@ function createMap(mapdata){
 			var squareWidth = this.width/num;
 			var numOfSquaresX = num;
 			var numOfSquaresY = Math.ceil(this.height/squareWidth);
-			// var squares = new Snap.Paper();
+			this.removeGrid();
+			// this.g.selectAll('.grid-square').remove();
+			// var p = new Snap();
+			// var squares = p.group()
 			var x=0;
 			var y=0;
 			for(var i=0; i<numOfSquaresX; i++){
 				y=0;
 				for(var j=0; j<numOfSquaresY; j++){
-					this.g.rect(x, y, squareWidth, squareWidth).attr({class:"grid-square", id:"square"+j+'-'+i})
+					this.gridSet.rect(x, y, squareWidth, squareWidth).attr({class:"grid-square", id:"square"+j+'-'+i})
 					y+=squareWidth;
 				}
 				x+=squareWidth;
 			}
+			// this.g.append(squares);
+		}, 
+		removeGrid: function(){
+			this.gridSet.clear();
 		}
 	}
 
 	var map = new Mapster(g, s);
-	map.drawGrid(100);
+	// map.drawGrid(75);
+
+  //////////////////////////////////////
+ ///////// Panzoom.js Handlers ////////
+//////////////////////////////////////
+
 	var $mapContainer = $('#map-container');
-	var $themap = $mapContainer.find('svg').panzoom({minScale:1, contain: 'invert'});
+	var $themap = $mapContainer.find('svg').panzoom(
+		{
+			minScale:1, 
+			contain: 'invert',
+			cursor: ''
+		});
+	var $controlHandle = $('#control-handle').panzoom(
+		{
+			disableZoom:'true', 
+			$set: $('#controls'), 
+			cursor:''
+		});
 	var instance = $themap.panzoom('instance');
+	//Fixes the offset issue in Firefox.
 	instance.parentOffset = { top: $mapContainer[0].offsetTop, left: $mapContainer[0].offsetLeft };
+	//Handles mousewheel zooming on map.
 	$mapContainer.on('mousewheel.focal', function( e ) {
 		e.preventDefault();
 		console.log(e);
@@ -58,7 +84,42 @@ function createMap(mapdata){
 			focal: e
 		});
 	});
+	//Reset dimensions on resize for panzoom.
 	$(window).on('resize', function() {
 	  $themap.panzoom('resetDimensions');
 	});
+	//Ensures the control handle remains green on drag.
+	$controlHandle.on('panzoomstart', function(){
+		console.log('yup');
+		$(this).css('background-color', 'lightgreen');
+	}).on('panzoomend', function(){
+		$(this).css('background-color', '');
+	})
+	//Only show move cursor when dragging.
+	$themap.on('panzoomstart', function(){
+		console.log('yuppers');
+		$(this).css('cursor', 'move');
+	}).on('panzoomend', function(){
+		$(this).css('cursor', '');
+	})
+
+//Event Handlers
+	$('#create-grid-button').on('click', createGrid);
+	$('#remove-grid-button').on('click', removeGrid);
+	$('#hide-grid-button').on('click', hideGrid);
+	$('#show-grid-button').on('click', showGrid);
+	function createGrid(){
+		var gridDimension = $('#grid-dimension-picker').val();
+		map.drawGrid(gridDimension);
+	}
+	function removeGrid(){
+		map.removeGrid();
+	}
+	function hideGrid(){
+		$('.grid-square').hide();
+	}
+	function showGrid(){
+		$('.grid-square').show();
+	}
+
 }

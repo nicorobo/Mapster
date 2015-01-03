@@ -4,17 +4,17 @@
 		<meta charset="UTF-8">
 		<title>Mapster</title>
 		<link rel="stylesheet" href="css/styles.css">
+		<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 	</head>
 	<body>
 
-		<div id="controls">
-			<button class="control" id="reset">Reset</button>
-			<button class="control" id="zoomIn">+</button>
-			<button class="control" id="zoomOut">-</button>
-			<button class="control" id="up">^</button>
-			<button class="control" id="down">v</button>
-			<button class="control" id="left">&lt;</button>
-			<button class="control" id="right">&gt;</button>
+		<div id="controls" class="control-set">
+			<div id="control-handle" class="control-set"></div>
+			<input type="number" id="grid-dimension-picker" class="control" max="200" min="10" value="20">
+			<button id="create-grid-button" class="control">Create Grid</button>
+			<button id="remove-grid-button" class="control">Remove Grid</button>
+			<button id="hide-grid-button" class="control"></button>
+			<button id="show-grid-button" class="control"></button>
 		</div>
 		<div id="map-container"></div>
 

@@ -4,14 +4,11 @@ body{
 }
 #controls{
 	background:rgba(20, 20, 20, 0.5);
-	border-radius: 0px 0px 10px 10px;
-	position:fixed;
-	top:0;
-	width:400px;
+	position: absolute;
 	text-align:center;
-	left:50%;
-	height:40px;
-	margin-left:-200px;
+	height:500px;
+	width: 150px;
+	z-index: 200;
 }
 .control{
 	cursor: pointer;
@@ -26,20 +23,29 @@ body{
 .control:hover{
 	background:lightblue;
 }
-#map-container{
+/*#map-container{
 	width:500px;
 	margin: 0 auto;
 	margin-top:50px;
 	border: 1px solid black;
 	overflow: visible;
 	box-sizing: content-box;
+}*/
+#map-container{
+	width:100%;
+	max-height:100vh;
+	box-sizing: content-box;
+}
+svg {
+	-webkit-backface-visibility: initial !important;
+	-webkit-transform-origin: 50% 50%;
 }
 .street{
 	fill:#f1f1f1;
 }
 .house{
 	fill: lightblue;
-	cursor: pointer;
+	cursor: pointer !important;
 }
 .house:hover{
 	fill: salmon;

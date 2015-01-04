@@ -2,7 +2,7 @@ body{
 	margin:0;
 	padding:0;
 }
-#controls{
+#control-panel{
 	background:rgba(20, 20, 20, 0.5);
 	position: absolute;
 	text-align:center;

@@ -15,19 +15,31 @@ body{
 }
 #control-handle{
 	float: right;
-	height:20px;
-	width:20px;
+	height:30px;
+	width:30px;
 	border-radius: 100%;
 	background: salmon;
-	margin-right: -10px;
-	margin-top: -10px;
+	margin-right: -15px;
+	margin-top: -15px;
 }
 #control-handle:hover{
 	background: lightgreen;
-	cursor: move;
+	cursor: pointer;
 }
 .control{
 	margin-top:20px;
+}
+.control-orb{
+	border-radius: 100%;
+	height: 30px;
+	width: 30px;
+	border: none;
+	outline: none;
+	background: white;
+	cursor: pointer;
+}
+.control-orb:hover{
+	background: lightgreen;
 }
 /*#map-container{
 	width:500px;
@@ -65,11 +77,20 @@ svg {
 .grid-square{
 	fill: transparent;
 	stroke: rgba(238,238,238, 0.6);
-	stroke-width: 0.5;
+	stroke-width: 0.2;
 }
 .grid-square:hover{
 	fill:rgba(250,128,114, 0.7);
 }
 #svg-background{
 	fill:white;
+}
+.type1{
+	fill:lightblue;
+	fill-opacity: 0.5;
+}
+.type0{
+	fill:salmon !important;
+
+	fill-opacity: 0.5;
 }

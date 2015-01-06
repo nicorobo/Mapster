@@ -28,7 +28,8 @@ function createMap(mapdata){
 		this.bounding = this.g.getBBox();
 		this.width = this.bounding.width;
 		this.height = this.bounding.height;
-		this.markCenter()
+		this.markCenter();
+		this.brush = 'type1';
 	}
 
 	  //////////////////////////////////////
@@ -64,7 +65,7 @@ function createMap(mapdata){
 			for(var i=0; i<this.mapArray.length; i++){
 				x=0;
 				for(var j=0; j<this.mapArray[i].length; j++){
-					this.gridSet.rect(x, y, squareWidth, squareWidth).attr({class:"grid-square type"+this.mapArray[j][i], id:"square"+j+'-'+i})
+					this.gridSet.rect(x, y, squareWidth, squareWidth).attr({class:"grid-square type"+this.mapArray[i][j], id:"square"+j+'-'+i});
 					x+=squareWidth;
 				}
 				y+=squareWidth;
@@ -73,8 +74,24 @@ function createMap(mapdata){
 		},
 		removeGrid: function(){
 			this.gridSet.clear();
-			$('#squareX').text('');
-			$('#squareY').text('');
+		},
+		changeBrush: function(newBrush){
+			var oldBrush = this.brush;
+			this.brush = newBrush;
+			return oldBrush;
+		},
+		colorSquares: function(squares){
+			for(var i=0; i< squares.length; i++){
+				var coords = squares[i];
+				var square = 'svg #square'+coords[0]+'-'+coords[1];
+				this.g.select(square).addClass(this.brush);
+			}
+		}, 
+		colorArray: function(squares){
+			for(var i=0; i< squares.length; i++){
+				var coords = squares[i];
+				this.mapArray[coords[1]][coords[0]] = this.brush.slice(4);
+			}
 		}
 	}
 
@@ -83,6 +100,7 @@ function createMap(mapdata){
 	//////////////////////////////////////
 
 	var map = new Mapster(mapImage);
+	chooseBrush('type1');
 
 	  //////////////////////////////////////
 	 ////////// jQuery Variables //////////
@@ -92,6 +110,8 @@ function createMap(mapdata){
 	var $themap = $mapContainer.find('svg');
 	var $controlHandle = $('#control-handle');
 	var $controlPanel = $('#control-panel');
+	var $coordX = $('#square-coordX')
+	var $coordY = $('#square-coordY')
 
 	  //////////////////////////////////////
 	 //////////// Panzoom.js //////////////
@@ -144,40 +164,123 @@ function createMap(mapdata){
 
 	// Buttons
 
-	$controlPanel.on('click', '#create-grid-button', createGrid)
-				 .on('click', '#remove-grid-button', removeGrid)
-				 .on('click', '#hide-grid-button', hideGrid)
-				 .on('click', '#show-grid-button', showGrid);
+		$controlPanel.on('click', '#create-grid-button', createGrid)
+					 .on('click', '#remove-grid-button', removeGrid)
+					 .on('click', '#hide-grid-button', hideGrid)
+					 .on('click', '#show-grid-button', showGrid);
 
 
-	function createGrid(){
-		var gridDimension = $('#grid-dimension-picker').val();
-		map.createArray(gridDimension);
-		map.drawGrid();
-	}
+		function createGrid(){
+			var gridDimension = $('#grid-dimension-picker').val();
+			map.createArray(gridDimension);
+			map.drawGrid();
+		}
 
-	function removeGrid(){
-		map.removeGrid();
-	}
+		function removeGrid(){
+			map.removeGrid();
+		}
 
-	function hideGrid(){
-		map.$gridSquares.hide();
-	}
+		function hideGrid(){
+			map.$gridSquares.hide();
+		}
 
-	function showGrid(){
-		map.$gridSquares.show();
-	}
+		function showGrid(){
+			map.$gridSquares.show();
+		}
 
 	// Coordinates
 
-	$mapContainer.on('mouseover', '.grid-square', readCoords);
+		$themap.on('mouseover', '.grid-square', readCoords);
+		$themap.on('mouseout', '.grid-square', emptyCoords);
 
-	function readCoords(){
-		var coords =  $(this).attr('id').slice(6).split('-');
-		$('#squareX').text(parseInt(coords[0])+1);
-		$('#squareY').text(parseInt(coords[1])+1);
+		function emptyCoords(){
+			$coordX.text(' ');
+			$coordY.text(' ');
+		}
+
+		function readCoords(){
+			var coords =  $(this).attr('id').slice(6).split('-');
+			$coordX.text(parseInt(coords[0])+1);
+			$coordY.text(parseInt(coords[1])+1);
+		}
+
+	// Grid Coloring
+
+		$controlPanel.on('click', '#type0-brush', chooseBrush)
+					 .on('click', '#type1-brush', chooseBrush)
+					 .on('click', '#type2-brush', chooseBrush)
+					 .on('click', '#type3-brush', chooseBrush);
+
+		function chooseBrush(newBrush){
+			var brushButton,brush;
+			if(typeof newBrush != 'object'){
+				brush = newBrush;
+			}
+			else{
+				brushButton = $(this);
+				brush = brushButton.attr('id').split('-')[0];
+			}
+			var oldBrush = map.changeBrush(brush);
+			$('#'+oldBrush+'-brush').css('border', '');
+			$('#'+brush+'-brush').css('border', '2px solid white');
+		}
+
+
+	  //////////////////////////////////////
+	 /////////// Grid Coloring ////////////
+	//////////////////////////////////////
+
+	var multiDrag = false;
+	var brushDrag = false;
+	var didPan = false;
+	var squaresList = [];
+
+	$themap.on('mousedown','.grid-square', chooseSquareDown);
+	$themap.on('mouseup','.grid-square', chooseSquareUp);
+
+	function chooseSquareDown(event){
+		var coord =  $(this).attr('id').slice(6).split('-');
+		squaresList.push(coord);
+		if(event.shiftKey || event.ctrlKey){
+			$themap.panzoom("disable");
+			$themap.on('mouseover','.grid-square', trackSquares);
+			if(event.shiftKey){
+				multiDrag = true;
+			}else if(event.ctrlKey){
+				brushDrag = true;
+			}
+		}
 	}
 
+	function trackSquares(event){
+		var startingCoord = squareList[0];
+		var currentCoord = $(this).attr('id').slice(6).split('-');
+		if(multiDrag){
+			// var squaresList = [];
+			// for(var i=startingCoord[0]; )
+		} else if(brushDrag){
+			squaresList.push(currentCoord);
+		}
+	}
 
+	function chooseSquareUp(event){
+		if(multiDrag || brushDrag){
+			$themap.panzoom("enable");
+			$themap.unbind('mouseover', trackSquares);
+			if(multiDrag){
+				multiDrag = false;
+				console.log('You just multiDragged');
+			} else if(brushDrag){
+				brushDrag = false;
+				console.log('You just brushDragged');
+				map.colorSquares(squaresList);
+				map.colorArray(squaresList);
+			}
+		}  else if(!didPan){
+			map.colorSquares(squaresList);
+			map.colorArray(squaresList);
+		}
+		squaresList = [];
+	}
 
 }

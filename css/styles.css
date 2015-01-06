@@ -41,6 +41,14 @@ body{
 .control-orb:hover{
 	background: lightgreen;
 }
+#grid-coordinates{
+	position: absolute;
+	width: 150px;
+	bottom: 10px;
+	color: white;
+	font-family: monospace;
+	font-size: 16px;
+}
 /*#map-container{
 	width:500px;
 	margin: 0 auto;
@@ -76,21 +84,43 @@ svg {
 }
 .grid-square{
 	fill: transparent;
-	stroke: rgba(238,238,238, 0.6);
-	stroke-width: 0.2;
+	stroke: rgba(238,238,238, 0.8);
+	stroke-width: 0.4;
 }
 .grid-square:hover{
-	fill:rgba(250,128,114, 0.7);
+	fill: rgba(20, 20, 20, 0.8);
 }
 #svg-background{
 	fill:white;
+}
+.type0{
+	fill:salmon;
+	fill-opacity: 0.5;
 }
 .type1{
 	fill:lightblue;
 	fill-opacity: 0.5;
 }
-.type0{
-	fill:salmon !important;
-
+.type2{
+	fill:lightgreen;
 	fill-opacity: 0.5;
+}
+.type3{
+	fill:white;
+	fill-opacity: 0.5;
+}
+#type0-brush{
+	background:salmon;
+}
+#type1-brush{
+	background:lightblue;
+}
+#type2-brush{
+	background:lightgreen;
+}
+#type3-brush{
+	background:white;
+}
+.brush:hover{
+	border: 2px solid white;
 }

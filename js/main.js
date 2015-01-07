@@ -221,14 +221,24 @@ function createMap(mapdata){
 	  //////////////////////////////////////
 	 ////////// Grid Navigation ///////////
 	//////////////////////////////////////
+	var mapWidth = $themap.width();
+	var mapHeight = $themap.height();
+	$themap.on('mousemove', findCoordinates)
 
-	// $themap.on('mousemove', findCoordinates)
-
-	// function findCoordinates(event){
-	// 	var gridWidth = this.mapArray[0].length;
-	// 	var gridHeight = this.mapArray.length;
-		
-	// }
+	function findCoordinates(event){
+		if(map.mapArray.length>0){
+			var matrix = $themap.panzoom('getMatrix');
+			var gridWidth = map.mapArray[0].length;
+			var gridHeight = map.mapArray.length;
+			var offsetX = (event.offsetX/matrix[0])+matrix[4];
+			var offsetY = (event.offsetY/matrix[0])+matrix[5];
+			var x = Math.floor(offsetX/(mapWidth/gridWidth));
+			var y = Math.floor(offsetY/(mapHeight/gridHeight));
+			$coordX.text(x);
+			$coordY.text(y);
+		}
+	}
+		console.log(map.width);
 
 
 	  //////////////////////////////////////

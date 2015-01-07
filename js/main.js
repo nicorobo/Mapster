@@ -83,8 +83,10 @@ function createMap(mapdata){
 		colorSquares: function(squares){
 			for(var i=0; i< squares.length; i++){
 				var coords = squares[i];
-				var square = 'svg #square'+coords[0]+'-'+coords[1];
-				this.g.select(square).addClass(this.brush);
+				var squareQuery = 'svg #square'+coords[0]+'-'+coords[1];
+				var previousType = $(squareQuery).attr('class').split(' ')[1];
+				this.g.select(squareQuery).removeClass(previousType);
+				this.g.select(squareQuery).addClass(this.brush);
 			}
 		}, 
 		colorArray: function(squares){
@@ -233,14 +235,16 @@ function createMap(mapdata){
 	var multiDrag = false;
 	var brushDrag = false;
 	var didPan = false;
+	var startingCoord;
 	var squaresList = [];
 
 	$themap.on('mousedown','.grid-square', chooseSquareDown);
 	$themap.on('mouseup','.grid-square', chooseSquareUp);
 
 	function chooseSquareDown(event){
-		var coord =  $(this).attr('id').slice(6).split('-');
-		squaresList.push(coord);
+		startingCoord =  $(this).attr('id').slice(6).split('-');
+		squaresList.push(startingCoord);
+			// console.log(squaresList);
 		if(event.shiftKey || event.ctrlKey){
 			$themap.panzoom("disable");
 			$themap.on('mouseover','.grid-square', trackSquares);
@@ -253,13 +257,50 @@ function createMap(mapdata){
 	}
 
 	function trackSquares(event){
-		var startingCoord = squareList[0];
+		// console.log(squaresList);
 		var currentCoord = $(this).attr('id').slice(6).split('-');
 		if(multiDrag){
-			// var squaresList = [];
-			// for(var i=startingCoord[0]; )
+			squaresList = [];
+			// console.log('startX: '+startingCoord[0]+'  startY: '+startingCoord[1]+'  currentX: '+currentCoord[0]+'  currentY: '+currentCoord[1]);
+			var offsetX = 0-(startingCoord[0]-currentCoord[0]);
+			var offsetY = startingCoord[1]-currentCoord[1];
+			// console.log('offsetX: '+offsetX+' offsetY: '+offsetY);
+			if(offsetX>=0 && offsetY>=0){
+				// console.log('quadI');
+				for(var i=0;i<=offsetX; i++){
+					for(var j=0;j>=offsetY*-1; j--){
+						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
+					}
+				}
+			} else if(offsetX<=0 && offsetY>=0){
+				// console.log('quadII');
+				for(var i=0;i>=offsetX; i--){
+					for(var j=0;j>=offsetY*-1; j--){
+						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
+					}
+				}
+			}  else if(offsetX<=0 && offsetY<=0){
+				// console.log('quadIII');
+				for(var i=0;i>=offsetX; i--){
+					for(var j=0;j<=offsetY*-1; j++){
+						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
+					}
+				}
+			} else if(offsetX>=0 && offsetY<=0){
+				// console.log('quadIV');
+				for(var i=0;i<=offsetX; i++){
+					for(var j=0;j<=offsetY*-1; j++){
+						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
+					}
+				}
+			} else{
+				console.log('uh oh');
+			}
+			map.colorSquares(squaresList);
+			// console.log(squaresList);
 		} else if(brushDrag){
 			squaresList.push(currentCoord);
+			map.colorSquares(squaresList);
 		}
 	}
 
@@ -270,6 +311,7 @@ function createMap(mapdata){
 			if(multiDrag){
 				multiDrag = false;
 				console.log('You just multiDragged');
+				map.colorArray(squaresList);
 			} else if(brushDrag){
 				brushDrag = false;
 				console.log('You just brushDragged');

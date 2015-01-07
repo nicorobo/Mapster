@@ -82,10 +82,10 @@ svg {
 .park{
 	fill:lightgreen;
 }
-.grid-square{
-	fill: transparent;
+.grid-line{
+	/*fill: transparent;*/
 	stroke: rgba(238,238,238, 0.8);
-	stroke-width: 0.4;
+	stroke-width: 0.2;
 }
 .grid-square:hover{
 	fill: rgba(20, 20, 20, 0.8);

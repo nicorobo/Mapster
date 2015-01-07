@@ -25,6 +25,7 @@ function createMap(mapdata){
 		this.mapArray = [];
 		this.gridSet = this.g.group();
 		this.$gridSquares = $('.grid-square');
+		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
 		this.width = this.bounding.width;
 		this.height = this.bounding.height;
@@ -60,17 +61,21 @@ function createMap(mapdata){
 		drawGrid: function(){
 			this.removeGrid();
 			var squareWidth = this.width/this.mapArray[0].length;
+			var height = this.height;
+			var width = this.width;
 			var x=0;
 			var y=0;
-			for(var i=0; i<this.mapArray.length; i++){
-				x=0;
-				for(var j=0; j<this.mapArray[i].length; j++){
-					this.gridSet.rect(x, y, squareWidth, squareWidth).attr({class:"grid-square type"+this.mapArray[i][j], id:"square"+j+'-'+i});
-					x+=squareWidth;
-				}
-				y+=squareWidth;
+			//vertical lines
+			for(var i=0; i<=this.mapArray[0].length; i++){
+				x = squareWidth*i;
+				this.gridSet.line(x, 0, x, height ).attr({class: 'grid-line'});
 			}
-			this.$gridSquares = $('.grid-square');
+			//horizontal lines
+			for(var i=0; i<=this.mapArray.length; i++){
+				y = squareWidth*i;
+				this.gridSet.line(0, y, width, y).attr({class: 'grid-line'});
+			}
+			this.$gridLines = $('.grid-line');
 		},
 		removeGrid: function(){
 			this.gridSet.clear();
@@ -79,21 +84,6 @@ function createMap(mapdata){
 			var oldBrush = this.brush;
 			this.brush = newBrush;
 			return oldBrush;
-		},
-		colorSquares: function(squares){
-			for(var i=0; i< squares.length; i++){
-				var coords = squares[i];
-				var squareQuery = 'svg #square'+coords[0]+'-'+coords[1];
-				var previousType = $(squareQuery).attr('class').split(' ')[1];
-				this.g.select(squareQuery).removeClass(previousType);
-				this.g.select(squareQuery).addClass(this.brush);
-			}
-		}, 
-		colorArray: function(squares){
-			for(var i=0; i< squares.length; i++){
-				var coords = squares[i];
-				this.mapArray[coords[1]][coords[0]] = this.brush.slice(4);
-			}
 		}
 	}
 
@@ -226,6 +216,19 @@ function createMap(mapdata){
 			$('#'+oldBrush+'-brush').css('border', '');
 			$('#'+brush+'-brush').css('border', '2px solid white');
 		}
+
+
+	  //////////////////////////////////////
+	 ////////// Grid Navigation ///////////
+	//////////////////////////////////////
+
+	// $themap.on('mousemove', findCoordinates)
+
+	// function findCoordinates(event){
+	// 	var gridWidth = this.mapArray[0].length;
+	// 	var gridHeight = this.mapArray.length;
+		
+	// }
 
 
 	  //////////////////////////////////////

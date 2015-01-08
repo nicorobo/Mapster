@@ -243,7 +243,8 @@ function createMap(mapdata){
 	function findCoordinates(event){
 		if(map.mapArray.length>0){
 			var gridWidth = map.mapArray[0].length;
-			var gridHeight = map.mapArray.length;
+			var gridHeight = map.mapArray.length-1;
+			console.log('mapWidth: '+mapWidth+' gridWidth: '+gridWidth+' offsetX: '+event.offsetX);
 			var x = Math.floor(event.offsetX/(mapWidth/gridWidth));
 			var y = Math.floor(event.offsetY/(mapHeight/gridHeight));
 			if(map.cursorSquareCoord[0]!=x || map.cursorSquareCoord[1]!= y){

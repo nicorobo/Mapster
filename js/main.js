@@ -23,6 +23,8 @@ function createMap(mapdata){
 	var Mapster = function(map) {
 		this.g = map;
 		this.mapArray = [];
+		this.squares = this.g.group();
+		this.tempSquares = this.g.group();
 		this.gridSet = this.g.group();
 		this.$gridSquares = $('.grid-square');
 		this.$gridLines = $('.grid-line');
@@ -31,6 +33,7 @@ function createMap(mapdata){
 		this.height = this.bounding.height;
 		this.markCenter();
 		this.brush = 'type1';
+		this.cursorSquareCoord = [0, 0];
 	}
 
 	  //////////////////////////////////////
@@ -84,6 +87,16 @@ function createMap(mapdata){
 			var oldBrush = this.brush;
 			this.brush = newBrush;
 			return oldBrush;
+		},
+		drawCursorBlock: function(coordinates){
+			this.cursorSquareCoord = coordinates;
+			var squareWidth = this.width/this.mapArray[0].length;
+			var pixelX = coordinates[0]*squareWidth;
+			var pixelY = coordinates[1]*squareWidth;
+			this.tempSquares.rect(pixelX, pixelY, squareWidth, squareWidth).attr({class: "cursorBlock"})
+		},
+		eraseCursorBlock:function(){
+			this.tempSquares.clear();
 		}
 	}
 
@@ -104,6 +117,8 @@ function createMap(mapdata){
 	var $controlPanel = $('#control-panel');
 	var $coordX = $('#square-coordX')
 	var $coordY = $('#square-coordY')
+	var mapWidth = $themap.width();
+	var mapHeight = $themap.height();
 
 	  //////////////////////////////////////
 	 //////////// Panzoom.js //////////////
@@ -139,7 +154,9 @@ function createMap(mapdata){
 
 	//Reset dimensions on resize for panzoom.
 	$(window).on('resize', function() {
-	  $themap.panzoom('resetDimensions');
+	  	$themap.panzoom('resetDimensions');
+	 	mapWidth = $themap.width();
+		mapHeight = $themap.height();
 	});
 
 	//Ensures the control handle remains green on drag.
@@ -221,21 +238,20 @@ function createMap(mapdata){
 	  //////////////////////////////////////
 	 ////////// Grid Navigation ///////////
 	//////////////////////////////////////
-	var mapWidth = $themap.width();
-	var mapHeight = $themap.height();
 	$themap.on('mousemove', findCoordinates)
 
 	function findCoordinates(event){
 		if(map.mapArray.length>0){
-			var matrix = $themap.panzoom('getMatrix');
 			var gridWidth = map.mapArray[0].length;
 			var gridHeight = map.mapArray.length;
-			var offsetX = (event.offsetX/matrix[0])+matrix[4];
-			var offsetY = (event.offsetY/matrix[0])+matrix[5];
-			var x = Math.floor(offsetX/(mapWidth/gridWidth));
-			var y = Math.floor(offsetY/(mapHeight/gridHeight));
-			$coordX.text(x);
-			$coordY.text(y);
+			var x = Math.floor(event.offsetX/(mapWidth/gridWidth));
+			var y = Math.floor(event.offsetY/(mapHeight/gridHeight));
+			if(map.cursorSquareCoord[0]!=x || map.cursorSquareCoord[1]!= y){
+				map.eraseCursorBlock();
+				map.drawCursorBlock([x, y]);
+				$coordX.text(x);
+				$coordY.text(y);
+			}
 		}
 	}
 		console.log(map.width);

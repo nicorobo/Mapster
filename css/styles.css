@@ -124,3 +124,6 @@ svg {
 .brush:hover{
 	border: 2px solid white;
 }
+.cursorBlock{
+	fill:salmon;
+}

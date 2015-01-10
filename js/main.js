@@ -337,53 +337,76 @@ function createMap(mapdata){
 	$themap.on('mouseup', mapMouseup);
 
 	function mapMousedown(event){
-		if(actOnGrid()){
-			event.preventDefault();
-			blocksInProgress = [];
-			blocksInProgress.push(map.currentCoord);
-			if(event.shiftKey || event.ctrlKey){
-				$themap.panzoom('option', 'disablePan', true);
-				$themap.panzoom('option', 'disableZoom', true);
-				if(event.shiftKey){
-					multiDrag = true;
-					$themap.on('mousemove', multiDragging);
-				}
-				else if(event.ctrlKey){
-					brushDrag = true;
-					map.colorSquares(blocksInProgress[0]);
-					$themap.on('mousemove', brushDragging);
-				}
+		if(!actOnGrid()) return false;
+		didPan = false;
+		event.preventDefault();
+		blocksInProgress = [];
+		blocksInProgress.push(map.currentCoord);
+		if(event.shiftKey || event.ctrlKey){
+			$themap.panzoom('option', 'disablePan', true);
+			$themap.panzoom('option', 'disableZoom', true);
+			if(event.shiftKey){
+				multiDrag = true;
+				$themap.on('mousemove', multiDragging);
 			}
+			else if(event.ctrlKey){
+				brushDrag = true;
+				map.colorSquares(blocksInProgress[0]);
+				$themap.on('mousemove', brushDragging);
+			}
+		}
+		else{
+			$themap.on('mousemove', isPanning);
 		}
 	}
 
 	function mapMouseup(event){
-		if(actOnGrid() && !didPan){
-			$themap.panzoom('option', 'disablePan', false);
-			$themap.panzoom('option', 'disableZoom', false);
-			if(multiDrag){
-				$themap.unbind('mousemove', multiDragging);
-				map.multiDrag(blocksInProgress[0], map.currentCoord);
-				multiDrag = false;
+		if(actOnGrid()){
+			if(multiDrag||brushDrag){
+				$themap.panzoom('option', 'disablePan', false);
+				$themap.panzoom('option', 'disableZoom', false);
+				if(multiDrag){
+					$themap.unbind('mousemove', multiDragging);
+					map.multiDrag(blocksInProgress[0], map.currentCoord);
+					multiDrag = false;
+				}
+				else if(brushDrag){
+					$themap.unbind('mousemove', brushDragging);
+					map.colorArray(blocksInProgress);
+					brushDrag = false;
+				}
 			}
-			else if(brushDrag){
-				$themap.unbind('mousemove', brushDragging);
+			else if(!didPan){
+				$themap.unbind('mousemove', isPanning);
+				map.colorSquares(blocksInProgress[0]);
 				map.colorArray(blocksInProgress);
-				brushDrag = false;
-			}
-			else{
-
 			}
 		}
 	}
+	function isPanning(){
+		didPan = true;
+	}
 	function brushDragging(){
-		if(arraysMatch(map.currentCoord, blocksInProgress[blocksInProgress.length-1])) return false;
+		if(arraysMatch(map.currentCoord, blocksInProgress[blocksInProgress.length-1]) || arrayContains(blocksInProgress, map.currentCoord)) return true;
+
 		blocksInProgress.push(map.currentCoord);
 		map.colorSquares(blocksInProgress[blocksInProgress.length-1]);
 	}
 	function multiDragging(){
 		map.multiDragDisplay(blocksInProgress[0]);
 	}
+
+
+	  //////////////////////////////////////
+	 /////////// Path Finding /////////////
+	//////////////////////////////////////
+
+	
+
+
+	  //////////////////////////////////////
+	 ///////// Utility Functions //////////
+	//////////////////////////////////////
 
 	function arraysMatch(a, b){
 		if(a === b) return true;
@@ -393,6 +416,13 @@ function createMap(mapdata){
 			if(a[i] != b[i]) return false;
 		}
 		return true;
+	}
+
+	function arrayContains(a, b){
+		for(var i=0; i<a.length; i++){
+			if(arraysMatch(a[i], b)) return true;
+		}
+		return false;
 	}
 
 

@@ -61,6 +61,7 @@ function createMap(mapdata){
 		},
 		findPath: function(startingCoord, endingCoord){
 			var graph = new Graph(this.mapArray);
+			console.log(graph);
 			var start = graph.grid[startingCoord[0]][startingCoord[1]];
 			var end = graph.grid[endingCoord[0]][endingCoord[1]];
     		var result = astar.search(graph, start, end);
@@ -162,7 +163,6 @@ function createMap(mapdata){
 			}
 			if(permanent){
 				var type = parseInt(this.brush.slice(4));
-				console.log(type);
 				var startingX = Math.min(startingCoord[0],endingCoord[0]);
 				var startingY = Math.min(startingCoord[1],endingCoord[1]);
 				for(var i=0; i<=Math.abs(offsetY); i++){
@@ -394,11 +394,6 @@ function createMap(mapdata){
 				map.colorArray(blocksInProgress);
 			}
 		}
-		for(var i=0; i< map.mapArray.length; i++){
-			for(var j=0; j<map.mapArray[i].length; j++){
-				console.log(map.mapArray[i][j]);
-			}
-		}
 	}
 	function isPanning(){
 		didPan = true;
@@ -447,6 +442,18 @@ function createMap(mapdata){
 		map.findPath(startingPoint, endingPoint);
 		isPathfinding = false;
 	}
+
+
+	  //////////////////////////////////////
+	 /////////// Array Printing ///////////
+	//////////////////////////////////////
+
+	$controlPanel.on('click', '#get-array', getArray);
+
+	function getArray(){
+		console.log(map.mapArray);
+	}
+
 
 
 

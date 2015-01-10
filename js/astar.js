@@ -160,11 +160,21 @@ function Graph(gridIn, options) {
     this.nodes = [];
     this.diagonal = !!options.diagonal;
     this.grid = [];
+    // for(var i=0; i<gridIn.length; i++){
+    //     var xArr = [];
+    //     for(var j=0; j<gridIn[i].length; j++){
+    //         var node = new GridNode(j, i, gridIn[j][i]);
+    //         xArr.push(node);
+    //         this.nodes.push(node);
+    //     }
+    //     this.grid.push(xArr);
+    // }
+    // console.log();
     for (var x = 0; x < gridIn.length; x++) {
         this.grid[x] = [];
 
         for (var y = 0, row = gridIn[x]; y < row.length; y++) {
-            var node = new GridNode(x, y, row[y]);
+            var node = new GridNode(x, y, gridIn[y][x]);
             this.grid[x][y] = node;
             this.nodes.push(node);
         }

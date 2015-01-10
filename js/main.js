@@ -59,6 +59,17 @@ function createMap(mapdata){
 			}
 			this.mapArray = arr;
 		},
+		findPath: function(startingCoord, endingCoord){
+			var graph = new Graph(this.mapArray);
+			var start = graph.grid[startingCoord[0]][startingCoord[1]];
+			var end = graph.grid[endingCoord[0]][endingCoord[1]];
+    		var result = astar.search(graph, start, end);
+    		var path = [];
+    		for(node in result){
+    			path.push([result[node].x, result[node].y]);
+    			this.colorSquares([result[node].x, result[node].y]);
+    		}
+		},
 		drawGrid: function(){
 			this.removeGrid();
 			var squareWidth = this.squareWidthSVG();
@@ -151,6 +162,7 @@ function createMap(mapdata){
 			}
 			if(permanent){
 				var type = parseInt(this.brush.slice(4));
+				console.log(type);
 				var startingX = Math.min(startingCoord[0],endingCoord[0]);
 				var startingY = Math.min(startingCoord[1],endingCoord[1]);
 				for(var i=0; i<=Math.abs(offsetY); i++){
@@ -190,8 +202,8 @@ function createMap(mapdata){
 	chooseBrush('type1');
 
 	function actOnGrid(){
-		if(map.mapArray.length>0) return true;
-		else return false;
+		if(!map.mapArray.length>0) return false;
+		else return true;
 	}
 
 	  //////////////////////////////////////
@@ -204,6 +216,7 @@ function createMap(mapdata){
 	var $controlPanel = $('#control-panel');
 	var $coordX = $('#square-coordX');
 	var $coordY = $('#square-coordY');
+	var $pathText = $('#path-text');
 
 	  //////////////////////////////////////
 	 //////////// Panzoom.js //////////////
@@ -336,7 +349,7 @@ function createMap(mapdata){
 	$themap.on('mouseup', mapMouseup);
 
 	function mapMousedown(event){
-		if(!actOnGrid()) return false;
+		if(!actOnGrid() || isPathfinding) return false;
 		didPan = false;
 		event.preventDefault();
 		blocksInProgress = [];
@@ -360,7 +373,7 @@ function createMap(mapdata){
 	}
 
 	function mapMouseup(event){
-		if(actOnGrid()){
+		if(actOnGrid() && !isPathfinding){
 			if(multiDrag||brushDrag){
 				$themap.panzoom('option', 'disablePan', false);
 				$themap.panzoom('option', 'disableZoom', false);
@@ -379,6 +392,11 @@ function createMap(mapdata){
 				$themap.unbind('mousemove', isPanning);
 				map.colorSquares(blocksInProgress[0]);
 				map.colorArray(blocksInProgress);
+			}
+		}
+		for(var i=0; i< map.mapArray.length; i++){
+			for(var j=0; j<map.mapArray[i].length; j++){
+				console.log(map.mapArray[i][j]);
 			}
 		}
 	}
@@ -400,10 +418,34 @@ function createMap(mapdata){
 	 /////////// Path Finding /////////////
 	//////////////////////////////////////
 
+	var isPathfinding = false;
+	var startingPoint, endingPoint;
+
 	$controlPanel.on('click', '#path-start', beginPathfinding);
 
-	function beginPathfinding(){
-		
+	function beginPathfinding(){		
+		isPathfinding = true;
+		$pathText.text("Click on your starting point.");
+		$themap.on('click', getStartingPoint);
+	}
+	function getStartingPoint(){
+		startingPoint = map.currentCoord;
+		haveStartingPoint();
+	}
+	function haveStartingPoint(){
+		$themap.unbind('click', getStartingPoint);
+		$pathText.text("Now click on your ending point.");
+		$themap.on('click', getEndingPoint);
+	}
+	function getEndingPoint(){
+		endingPoint = map.currentCoord;
+		finishPathfinding();
+	}
+	function finishPathfinding(){
+		$themap.unbind('click', getEndingPoint);
+		$pathText.text("Awesome! Heres your path.");
+		map.findPath(startingPoint, endingPoint);
+		isPathfinding = false;
 	}
 
 

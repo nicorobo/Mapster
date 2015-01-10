@@ -1,4 +1,4 @@
-  
+
   //////////////////////////////////////
  ///// Initialize Snap.svg Object /////
 //////////////////////////////////////
@@ -23,13 +23,16 @@ function createMap(mapdata){
 	var Mapster = function(map) {
 		this.g = map;
 		this.mapArray = [];
-		this.gridSet = this.g.group();
+		this.squares = this.g.group().attr({opacity: 0.5});
+		this.permaSquares = this.squares.group();
+		this.tempSquares = this.squares.group();
+		this.gridSet = this.g.group().attr({opacity: 0.8});
 		this.$gridSquares = $('.grid-square');
+		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
-		this.width = this.bounding.width;
-		this.height = this.bounding.height;
 		this.markCenter();
 		this.brush = 'type1';
+		this.currentCoord = [0, 0];
 	}
 
 	  //////////////////////////////////////
@@ -45,9 +48,9 @@ function createMap(mapdata){
 		},
 		createArray: function(sizeX, sizeY){
 			var arr = [];
-			var squareWidth = this.width/sizeX;
+			var squareWidth = this.bounding.width/sizeX;
 			var dimX = sizeX;
-			var dimY = sizeY || Math.ceil(this.height/squareWidth) || sizeX;
+			var dimY = sizeY || Math.ceil(this.bounding.height/squareWidth) || sizeX;
 			for(var i=0; i<dimY; i++){
 				var xArr = [];
 				for(var j=0; j<dimX; j++){
@@ -59,18 +62,22 @@ function createMap(mapdata){
 		},
 		drawGrid: function(){
 			this.removeGrid();
-			var squareWidth = this.width/this.mapArray[0].length;
+			var squareWidth = this.squareWidthSVG();
+			var height = this.bounding.height;
+			var width = this.bounding.width;
 			var x=0;
 			var y=0;
-			for(var i=0; i<this.mapArray.length; i++){
-				x=0;
-				for(var j=0; j<this.mapArray[i].length; j++){
-					this.gridSet.rect(x, y, squareWidth, squareWidth).attr({class:"grid-square type"+this.mapArray[i][j], id:"square"+j+'-'+i});
-					x+=squareWidth;
-				}
-				y+=squareWidth;
+			//vertical lines
+			for(var i=0; i<=this.mapArray[0].length; i++){
+				x = squareWidth*i;
+				this.gridSet.line(x, 0, x, height ).attr({class: 'grid-line'});
 			}
-			this.$gridSquares = $('.grid-square');
+			//horizontal lines
+			for(var i=0; i<=this.mapArray.length; i++){
+				y = squareWidth*i;
+				this.gridSet.line(0, y, width, y).attr({class: 'grid-line'});
+			}
+			this.$gridLines = $('.grid-line');
 		},
 		removeGrid: function(){
 			this.gridSet.clear();
@@ -80,20 +87,99 @@ function createMap(mapdata){
 			this.brush = newBrush;
 			return oldBrush;
 		},
-		colorSquares: function(squares){
-			for(var i=0; i< squares.length; i++){
-				var coords = squares[i];
-				var squareQuery = 'svg #square'+coords[0]+'-'+coords[1];
-				var previousType = $(squareQuery).attr('class').split(' ')[1];
-				this.g.select(squareQuery).removeClass(previousType);
-				this.g.select(squareQuery).addClass(this.brush);
+		squareWidth: function(){
+			return window.innerWidth/this.mapArray[0].length;
+		},
+		squareWidthSVG: function(){
+			return this.bounding.width/this.mapArray[0].length;
+		},
+		drawCursorBlock: function(coordinates){
+			this.currentCoord = coordinates;
+			var squareWidth = this.squareWidthSVG();
+			var pixels = this.getTopLeftPixels(coordinates);
+			this.tempSquares.rect(pixels[0], pixels[1], squareWidth, squareWidth).attr({class: "cursorBlock"})
+		},
+		eraseCursorBlock:function(){
+			this.tempSquares.clear();
+		},
+		colorArray: function(coordinates){
+			var type = parseInt(this.brush.slice(4));
+			for(var i=0; i<=coordinates.length-1; i++){
+				var current = coordinates[i];
+				this.mapArray[current[1]][current[0]] = type;
 			}
-		}, 
-		colorArray: function(squares){
-			for(var i=0; i< squares.length; i++){
-				var coords = squares[i];
-				this.mapArray[coords[1]][coords[0]] = this.brush.slice(4);
+		},
+		colorSquares: function(coordinates){
+			this.tempSquares.clear();
+			var pixels = this.getTopLeftPixels(coordinates);
+			var squareWidth = this.squareWidthSVG();
+			this.permaSquares.rect(pixels[0], pixels[1], squareWidth, squareWidth).attr({class: this.brush});
+		},
+		multiDragDisplay: function(startingCoord){
+			this.tempSquares.clear();
+			this.drawRect(startingCoord, this.currentCoord, this.tempSquares, false);
+		},
+		multiDrag: function(startingCoord, endingCoord){
+			this.drawRect(startingCoord, endingCoord, this.permaSquares, true)
+		},
+		drawRect: function(startingCoord, endingCoord, canvas, permanent){
+			var offsetX = startingCoord[0]-endingCoord[0]
+			var offsetY = startingCoord[1]-endingCoord[1]
+			var toRight = 0>=offsetX;
+			var toBelow = 0>=offsetY;
+			var squareWidth = this.squareWidthSVG();
+			// rectangles root at top left
+			if(toRight && toBelow){
+				var pixels = this.getTopLeftPixels(startingCoord);
+				canvas.rect(pixels[0], pixels[1], ((-1)*offsetX+1)*squareWidth, ((-1)*offsetY+1)*squareWidth).attr({class:this.brush});
 			}
+			// rectangles root at top right
+			if(toRight && !toBelow){
+				var pixelX = this.getTopLeftPixels(startingCoord)[0];
+				var pixelY = this.getTopRightPixels(endingCoord)[1];
+				canvas.rect(pixelX, pixelY, ((-1)*offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
+			}
+			// rectangles root at top left
+			if(!toRight && toBelow){
+				var pixelX = this.getBottomLeftPixels(endingCoord)[0];
+				var pixelY = this.getTopLeftPixels(startingCoord)[1];
+				canvas.rect(pixelX, pixelY, (offsetX+1)*squareWidth, ((-1)*offsetY+1)*squareWidth).attr({class:this.brush});
+			}
+			// rectangles root at top right
+			if(!toRight && !toBelow){
+				var pixels = this.getTopLeftPixels(endingCoord);
+				canvas.rect(pixels[0], pixels[1], (offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
+			}
+			if(permanent){
+				var type = parseInt(this.brush.slice(4));
+				var startingX = Math.min(startingCoord[0],endingCoord[0]);
+				var startingY = Math.min(startingCoord[1],endingCoord[1]);
+				for(var i=0; i<=Math.abs(offsetY); i++){
+					for(var j=0; j<=Math.abs(offsetX); j++){
+						this.mapArray[startingY+i][startingX+j] = type;
+					}
+				}
+			}
+		},
+		getTopLeftPixels: function(coordinates){
+			var x = coordinates[0]*this.squareWidthSVG();
+			var y = coordinates[1]*this.squareWidthSVG();
+			return [x, y];
+		},
+		getTopRightPixels: function(coordinates){
+			var x = (coordinates[0]+1)*this.squareWidthSVG();
+			var y = coordinates[1]*this.squareWidthSVG();
+			return [x, y];
+		},
+		getBottomLeftPixels: function(coordinates){
+			var x = coordinates[0]*this.squareWidthSVG();
+			var y = (coordinates[1]+1)*this.squareWidthSVG();
+			return [x, y];
+		},
+		getBottomRightPixels: function(coordinates){
+			var x = (coordinates[0]+1)*this.squareWidthSVG();
+			var y = (coordinates[1]+1)*this.squareWidthSVG();
+			return [x, y];
 		}
 	}
 
@@ -104,6 +190,11 @@ function createMap(mapdata){
 	var map = new Mapster(mapImage);
 	chooseBrush('type1');
 
+	function actOnGrid(){
+		if(map.mapArray.length>0) return true;
+		else return false;
+	}
+
 	  //////////////////////////////////////
 	 ////////// jQuery Variables //////////
 	//////////////////////////////////////
@@ -112,8 +203,8 @@ function createMap(mapdata){
 	var $themap = $mapContainer.find('svg');
 	var $controlHandle = $('#control-handle');
 	var $controlPanel = $('#control-panel');
-	var $coordX = $('#square-coordX')
-	var $coordY = $('#square-coordY')
+	var $coordX = $('#square-coordX');
+	var $coordY = $('#square-coordY');
 
 	  //////////////////////////////////////
 	 //////////// Panzoom.js //////////////
@@ -149,7 +240,7 @@ function createMap(mapdata){
 
 	//Reset dimensions on resize for panzoom.
 	$(window).on('resize', function() {
-	  $themap.panzoom('resetDimensions');
+	  	$themap.panzoom('resetDimensions');
 	});
 
 	//Ensures the control handle remains green on drag.
@@ -164,7 +255,7 @@ function createMap(mapdata){
 	 /////////// Control Panel ////////////
 	//////////////////////////////////////
 
-	// Buttons
+	// Grid Creation
 
 		$controlPanel.on('click', '#create-grid-button', createGrid)
 					 .on('click', '#remove-grid-button', removeGrid)
@@ -183,30 +274,14 @@ function createMap(mapdata){
 		}
 
 		function hideGrid(){
-			map.$gridSquares.hide();
+			map.$gridLines.hide();
 		}
 
 		function showGrid(){
-			map.$gridSquares.show();
+			map.$gridLines.show();
 		}
 
-	// Coordinates
-
-		$themap.on('mouseover', '.grid-square', readCoords);
-		$themap.on('mouseout', '.grid-square', emptyCoords);
-
-		function emptyCoords(){
-			$coordX.text(' ');
-			$coordY.text(' ');
-		}
-
-		function readCoords(){
-			var coords =  $(this).attr('id').slice(6).split('-');
-			$coordX.text(parseInt(coords[0])+1);
-			$coordY.text(parseInt(coords[1])+1);
-		}
-
-	// Grid Coloring
+	// Brush Selection
 
 		$controlPanel.on('click', '#type0-brush', chooseBrush)
 					 .on('click', '#type1-brush', chooseBrush)
@@ -229,100 +304,134 @@ function createMap(mapdata){
 
 
 	  //////////////////////////////////////
+	 ////////// Grid Navigation ///////////
+	//////////////////////////////////////
+
+	$themap.on('mousemove', findCoordinates);
+
+	function findCoordinates(event){
+		if(actOnGrid()){
+			var squareSize = map.squareWidth();
+			var x = Math.floor(event.offsetX/squareSize);
+			var y = Math.floor(event.offsetY/squareSize);			
+
+			if(map.currentCoord[0]!=x || map.currentCoord[1]!= y){
+				map.eraseCursorBlock();
+				map.drawCursorBlock([x, y]);
+				$coordX.text(x);
+				$coordY.text(y);
+			}
+		}
+	}
+
+	  //////////////////////////////////////
 	 /////////// Grid Coloring ////////////
 	//////////////////////////////////////
 
+	var didPan = false;
 	var multiDrag = false;
 	var brushDrag = false;
-	var didPan = false;
-	var startingCoord;
-	var squaresList = [];
+	var blocksInProgress = [];
 
-	$themap.on('mousedown','.grid-square', chooseSquareDown);
-	$themap.on('mouseup','.grid-square', chooseSquareUp);
+	$themap.on('mousedown', mapMousedown);
+	$themap.on('mouseup', mapMouseup);
 
-	function chooseSquareDown(event){
-		startingCoord =  $(this).attr('id').slice(6).split('-');
-		squaresList.push(startingCoord);
-			// console.log(squaresList);
+	function mapMousedown(event){
+		if(!actOnGrid()) return false;
+		didPan = false;
+		event.preventDefault();
+		blocksInProgress = [];
+		blocksInProgress.push(map.currentCoord);
 		if(event.shiftKey || event.ctrlKey){
-			$themap.panzoom("disable");
-			$themap.on('mouseover','.grid-square', trackSquares);
+			$themap.panzoom('option', 'disablePan', true);
+			$themap.panzoom('option', 'disableZoom', true);
 			if(event.shiftKey){
 				multiDrag = true;
-			}else if(event.ctrlKey){
+				$themap.on('mousemove', multiDragging);
+			}
+			else if(event.ctrlKey){
 				brushDrag = true;
+				map.colorSquares(blocksInProgress[0]);
+				$themap.on('mousemove', brushDragging);
 			}
+		}
+		else{
+			$themap.on('mousemove', isPanning);
 		}
 	}
 
-	function trackSquares(event){
-		// console.log(squaresList);
-		var currentCoord = $(this).attr('id').slice(6).split('-');
-		if(multiDrag){
-			squaresList = [];
-			// console.log('startX: '+startingCoord[0]+'  startY: '+startingCoord[1]+'  currentX: '+currentCoord[0]+'  currentY: '+currentCoord[1]);
-			var offsetX = 0-(startingCoord[0]-currentCoord[0]);
-			var offsetY = startingCoord[1]-currentCoord[1];
-			// console.log('offsetX: '+offsetX+' offsetY: '+offsetY);
-			if(offsetX>=0 && offsetY>=0){
-				// console.log('quadI');
-				for(var i=0;i<=offsetX; i++){
-					for(var j=0;j>=offsetY*-1; j--){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
+	function mapMouseup(event){
+		if(actOnGrid()){
+			if(multiDrag||brushDrag){
+				$themap.panzoom('option', 'disablePan', false);
+				$themap.panzoom('option', 'disableZoom', false);
+				if(multiDrag){
+					$themap.unbind('mousemove', multiDragging);
+					map.multiDrag(blocksInProgress[0], map.currentCoord);
+					multiDrag = false;
 				}
-			} else if(offsetX<=0 && offsetY>=0){
-				// console.log('quadII');
-				for(var i=0;i>=offsetX; i--){
-					for(var j=0;j>=offsetY*-1; j--){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
+				else if(brushDrag){
+					$themap.unbind('mousemove', brushDragging);
+					map.colorArray(blocksInProgress);
+					brushDrag = false;
 				}
-			}  else if(offsetX<=0 && offsetY<=0){
-				// console.log('quadIII');
-				for(var i=0;i>=offsetX; i--){
-					for(var j=0;j<=offsetY*-1; j++){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
-				}
-			} else if(offsetX>=0 && offsetY<=0){
-				// console.log('quadIV');
-				for(var i=0;i<=offsetX; i++){
-					for(var j=0;j<=offsetY*-1; j++){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
-				}
-			} else{
-				console.log('uh oh');
 			}
-			map.colorSquares(squaresList);
-			// console.log(squaresList);
-		} else if(brushDrag){
-			squaresList.push(currentCoord);
-			map.colorSquares(squaresList);
+			else if(!didPan){
+				$themap.unbind('mousemove', isPanning);
+				map.colorSquares(blocksInProgress[0]);
+				map.colorArray(blocksInProgress);
+			}
 		}
+	}
+	function isPanning(){
+		didPan = true;
+	}
+	function brushDragging(){
+		if(arraysMatch(map.currentCoord, blocksInProgress[blocksInProgress.length-1]) || arrayContains(blocksInProgress, map.currentCoord)) return true;
+
+		blocksInProgress.push(map.currentCoord);
+		map.colorSquares(blocksInProgress[blocksInProgress.length-1]);
+	}
+	function multiDragging(){
+		map.multiDragDisplay(blocksInProgress[0]);
 	}
 
-	function chooseSquareUp(event){
-		if(multiDrag || brushDrag){
-			$themap.panzoom("enable");
-			$themap.unbind('mouseover', trackSquares);
-			if(multiDrag){
-				multiDrag = false;
-				console.log('You just multiDragged');
-				map.colorArray(squaresList);
-			} else if(brushDrag){
-				brushDrag = false;
-				console.log('You just brushDragged');
-				map.colorSquares(squaresList);
-				map.colorArray(squaresList);
-			}
-		}  else if(!didPan){
-			map.colorSquares(squaresList);
-			map.colorArray(squaresList);
-		}
-		squaresList = [];
+
+	  //////////////////////////////////////
+	 /////////// Path Finding /////////////
+	//////////////////////////////////////
+
+	$controlPanel.on('click', '#path-start', beginPathfinding);
+
+	function beginPathfinding(){
+		
 	}
+
+
+
+	  //////////////////////////////////////
+	 ///////// Utility Functions //////////
+	//////////////////////////////////////
+
+	function arraysMatch(a, b){
+		if(a === b) return true;
+		if(a== null || b == null) return false;
+		if(a.length != b.length) return false;
+		for(var i=0; i<a.length; i++){
+			if(a[i] != b[i]) return false;
+		}
+		return true;
+	}
+
+	function arrayContains(a, b){
+		for(var i=0; i<a.length; i++){
+			if(arraysMatch(a[i], b)) return true;
+		}
+		return false;
+	}
+
+
+
 
 }
+

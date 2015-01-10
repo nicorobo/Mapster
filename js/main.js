@@ -29,11 +29,9 @@ function createMap(mapdata){
 		this.$gridSquares = $('.grid-square');
 		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
-		this.width = this.bounding.width;
-		this.height = this.bounding.height;
 		this.markCenter();
 		this.brush = 'type1';
-		this.cursorSquareCoord = [0, 0];
+		this.currentCoord = [0, 0];
 		this.type0coords=[];
 		this.type1coords=[];
 		this.type2coords=[];
@@ -54,9 +52,9 @@ function createMap(mapdata){
 		},
 		createArray: function(sizeX, sizeY){
 			var arr = [];
-			var squareWidth = this.width/sizeX;
+			var squareWidth = this.bounding.width/sizeX;
 			var dimX = sizeX;
-			var dimY = sizeY || Math.ceil(this.height/squareWidth) || sizeX;
+			var dimY = sizeY || Math.ceil(this.bounding.height/squareWidth) || sizeX;
 			for(var i=0; i<dimY; i++){
 				var xArr = [];
 				for(var j=0; j<dimX; j++){
@@ -68,9 +66,9 @@ function createMap(mapdata){
 		},
 		drawGrid: function(){
 			this.removeGrid();
-			var squareWidth = this.width/this.mapArray[0].length;
-			var height = this.height;
-			var width = this.width;
+			var squareWidth = this.squareWidthSVG();
+			var height = this.bounding.height;
+			var width = this.bounding.width;
 			var x=0;
 			var y=0;
 			//vertical lines
@@ -93,9 +91,15 @@ function createMap(mapdata){
 			this.brush = newBrush;
 			return oldBrush;
 		},
+		squareWidth: function(){
+			return window.innerWidth/this.mapArray[0].length;
+		},
+		squareWidthSVG: function(){
+			return this.bounding.width/this.mapArray[0].length;
+		},
 		drawCursorBlock: function(coordinates){
-			this.cursorSquareCoord = coordinates;
-			var squareWidth = this.width/this.mapArray[0].length;
+			this.currentCoord = coordinates;
+			var squareWidth = this.squareWidthSVG();
 			var pixelX = coordinates[0]*squareWidth;
 			var pixelY = coordinates[1]*squareWidth;
 			this.tempSquares.rect(pixelX, pixelY, squareWidth, squareWidth).attr({class: "cursorBlock"})
@@ -108,6 +112,20 @@ function createMap(mapdata){
 		},
 		colorArray: function(coordinates){
 
+		},
+		multiDragDisplay: function(startingCoord){
+			this.tempSquares.clear();
+			this.drawRect(startingCoord, this.currentCoord, this.tempSquares, false);
+		},
+		drawRect: function(startingCoord, endingCoord, canvas, permanent){
+			console.log(startingCoord);
+
+			console.log(endingCoord);
+			canvas.rect(80, 80, 200, 150).attr({class: this.brush});
+			canvas.rect(20, 20, 200, 150).attr({class: this.brush});
+			if(permanent){
+
+			}
 		}
 	}
 
@@ -117,6 +135,11 @@ function createMap(mapdata){
 
 	var map = new Mapster(mapImage);
 	chooseBrush('type1');
+
+	function actOnGrid(){
+		if(map.mapArray.length>0) return true;
+		else return false;
+	}
 
 	  //////////////////////////////////////
 	 ////////// jQuery Variables //////////
@@ -128,8 +151,6 @@ function createMap(mapdata){
 	var $controlPanel = $('#control-panel');
 	var $coordX = $('#square-coordX');
 	var $coordY = $('#square-coordY');
-	var mapWidth = window.innerWidth;
-	var mapHeight = window.innerHeight;
 
 	  //////////////////////////////////////
 	 //////////// Panzoom.js //////////////
@@ -166,8 +187,6 @@ function createMap(mapdata){
 	//Reset dimensions on resize for panzoom.
 	$(window).on('resize', function() {
 	  	$themap.panzoom('resetDimensions');
-		mapWidth = window.innerWidth;
-		mapHeight = window.innerHeight;
 	});
 
 	//Ensures the control handle remains green on drag.
@@ -233,17 +252,16 @@ function createMap(mapdata){
 	  //////////////////////////////////////
 	 ////////// Grid Navigation ///////////
 	//////////////////////////////////////
+
 	$themap.on('mousemove', findCoordinates);
 
 	function findCoordinates(event){
-		if(map.mapArray.length>0){
-			var gridWidth = map.mapArray[0].length;
-			var gridHeight = map.mapArray.length;
-			var squareSize = mapWidth/gridWidth;
-			var x = Math.floor((event.offsetX-1)/squareSize);
-			var y = Math.floor((event.offsetY-1)/squareSize);			
+		if(actOnGrid()){
+			var squareSize = map.squareWidth();
+			var x = Math.floor(event.offsetX/squareSize);
+			var y = Math.floor(event.offsetY/squareSize);			
 
-			if(map.cursorSquareCoord[0]!=x || map.cursorSquareCoord[1]!= y){
+			if(map.currentCoord[0]!=x || map.currentCoord[1]!= y){
 				map.eraseCursorBlock();
 				map.drawCursorBlock([x, y]);
 				$coordX.text(x);
@@ -251,6 +269,55 @@ function createMap(mapdata){
 			}
 		}
 	}
-		console.log(map.width);
+
+	  //////////////////////////////////////
+	 /////////// Grid Coloring ////////////
+	//////////////////////////////////////
+
+	var didPan = false;
+	var multiDrag = false;
+	var brushDrag = false;
+	var possibleBlocks = [];
+
+	$themap.on('mousedown', mapMousedown);
+	$themap.on('mouseup', mapMouseup);
+
+	function mapMousedown(event){
+		if(actOnGrid()){
+			possibleBlocks = [];
+			possibleBlocks.push(map.currentCoord);
+			if(event.shiftKey){
+				multiDrag = true;
+				$themap.on('mousemove', multiDragging);
+			}
+			else if(event.ctrlKey){
+				brushDrag = true;
+				$
+			}
+		}
+	}
+
+	function mapMouseup(event){
+		if(actOnGrid() && !didPan){
+			if(multiDrag){
+				$themap.unbind('mousemove', multiDragging);
+				multiDrag = false;
+			}
+			else if(brushDrag){
+				brushDrag = false;
+			}
+			else{
+
+			}
+		}
+	}
+
+	function multiDragging(){
+		map.multiDragDisplay(possibleBlocks[0]);
+	}
+
+
+
+
 }
 

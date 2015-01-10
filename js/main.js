@@ -149,7 +149,7 @@ function createMap(mapdata){
 				canvas.rect(pixels[0], pixels[1], (offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
 			}
 			if(permanent){
-
+				
 			}
 		},
 		getTopLeftPixels: function(coordinates){

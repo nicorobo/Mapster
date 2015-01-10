@@ -23,9 +23,9 @@ function createMap(mapdata){
 	var Mapster = function(map) {
 		this.g = map;
 		this.mapArray = [];
-		this.squares = this.g.group();
-		this.tempSquares = this.g.group();
-		this.gridSet = this.g.group();
+		this.squares = this.g.group().attr({opacity: 0.5});
+		this.tempSquares = this.g.group().attr({opacity: 0.5});
+		this.gridSet = this.g.group().attr({opacity: 0.8});
 		this.$gridSquares = $('.grid-square');
 		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
@@ -100,9 +100,8 @@ function createMap(mapdata){
 		drawCursorBlock: function(coordinates){
 			this.currentCoord = coordinates;
 			var squareWidth = this.squareWidthSVG();
-			var pixelX = coordinates[0]*squareWidth;
-			var pixelY = coordinates[1]*squareWidth;
-			this.tempSquares.rect(pixelX, pixelY, squareWidth, squareWidth).attr({class: "cursorBlock"})
+			var pixels = this.getTopLeftPixels(coordinates);
+			this.tempSquares.rect(pixels[0], pixels[1], squareWidth, squareWidth).attr({class: "cursorBlock"})
 		},
 		eraseCursorBlock:function(){
 			this.tempSquares.clear();
@@ -118,15 +117,61 @@ function createMap(mapdata){
 			this.drawRect(startingCoord, this.currentCoord, this.tempSquares, false);
 		},
 		drawRect: function(startingCoord, endingCoord, canvas, permanent){
-			console.log(startingCoord);
-
-			console.log(endingCoord);
-			canvas.rect(80, 80, 200, 150).attr({class: this.brush});
-			canvas.rect(20, 20, 200, 150).attr({class: this.brush});
+			var offsetX = startingCoord[0]-endingCoord[0]
+			var offsetY = startingCoord[1]-endingCoord[1]
+			var toRight = 0>=offsetX;
+			var toBelow = 0>=offsetY;
+			var squareWidth = this.squareWidthSVG();
+			// rectangles root at top left
+			if(toRight && toBelow){
+				var pixels = this.getTopLeftPixels(startingCoord);
+				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
+				canvas.rect(pixels[0], pixels[1], ((-1)*offsetX+1)*squareWidth, ((-1)*offsetY+1)*squareWidth).attr({class:this.brush});
+			}
+			// rectangles root at top right
+			if(toRight && !toBelow){
+				var pixelX = this.getTopLeftPixels(startingCoord)[0];
+				var pixelY = this.getTopRightPixels(endingCoord)[1];
+				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
+				canvas.rect(pixelX, pixelY, ((-1)*offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
+			}
+			// rectangles root at top left
+			if(!toRight && toBelow){
+				var pixelX = this.getBottomLeftPixels(endingCoord)[0];
+				var pixelY = this.getTopLeftPixels(startingCoord)[1];
+				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
+				canvas.rect(pixelX, pixelY, (offsetX+1)*squareWidth, ((-1)*offsetY+1)*squareWidth).attr({class:this.brush});
+			}
+			// rectangles root at top right
+			if(!toRight && !toBelow){
+				var pixels = this.getTopLeftPixels(endingCoord);
+				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
+				canvas.rect(pixels[0], pixels[1], (offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
+			}
 			if(permanent){
 
 			}
-		}
+		},
+		getTopLeftPixels: function(coordinates){
+			var x = coordinates[0]*this.squareWidthSVG();
+			var y = coordinates[1]*this.squareWidthSVG();
+			return [x, y];
+		},
+		getTopRightPixels: function(coordinates){
+			var x = (coordinates[0]+1)*this.squareWidthSVG();
+			var y = coordinates[1]*this.squareWidthSVG();
+			return [x, y];
+		},
+		getBottomLeftPixels: function(coordinates){
+			var x = coordinates[0]*this.squareWidthSVG();
+			var y = (coordinates[1]+1)*this.squareWidthSVG();
+			return [x, y];
+		},
+		getBottomRightPixels: function(coordinates){
+			var x = (coordinates[0]+1)*this.squareWidthSVG();
+			var y = (coordinates[1]+1)*this.squareWidthSVG();
+			return [x, y];
+		},
 	}
 
 	  //////////////////////////////////////
@@ -284,21 +329,27 @@ function createMap(mapdata){
 
 	function mapMousedown(event){
 		if(actOnGrid()){
+			event.preventDefault();
 			possibleBlocks = [];
 			possibleBlocks.push(map.currentCoord);
-			if(event.shiftKey){
-				multiDrag = true;
-				$themap.on('mousemove', multiDragging);
-			}
-			else if(event.ctrlKey){
-				brushDrag = true;
-				$
+			if(event.shiftKey || event.ctrlKey){
+				$themap.panzoom('option', 'disablePan', true);
+				$themap.panzoom('option', 'disableZoom', true);
+				if(event.shiftKey){
+					multiDrag = true;
+					$themap.on('mousemove', multiDragging);
+				}
+				else if(event.ctrlKey){
+					brushDrag = true;
+				}
 			}
 		}
 	}
 
 	function mapMouseup(event){
 		if(actOnGrid() && !didPan){
+			$themap.panzoom('option', 'disablePan', false);
+			$themap.panzoom('option', 'disableZoom', false);
 			if(multiDrag){
 				$themap.unbind('mousemove', multiDragging);
 				multiDrag = false;
@@ -309,6 +360,7 @@ function createMap(mapdata){
 			else{
 
 			}
+			map.tempSquares.clear();
 		}
 	}
 

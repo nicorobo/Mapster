@@ -84,30 +84,23 @@ svg {
 }
 .grid-line{
 	/*fill: transparent;*/
-	stroke: rgba(238,238,238, 0.8);
+	stroke: rgb(238,238,238);
 	stroke-width: 0.2;
-}
-.grid-square:hover{
-	fill: rgba(20, 20, 20, 0.8);
 }
 #svg-background{
 	fill:white;
 }
 .type0{
 	fill:salmon;
-	fill-opacity: 0.5;
 }
 .type1{
 	fill:lightblue;
-	fill-opacity: 0.5;
 }
 .type2{
 	fill:lightgreen;
-	fill-opacity: 0.5;
 }
 .type3{
 	fill:white;
-	fill-opacity: 0.5;
 }
 #type0-brush{
 	background:salmon;

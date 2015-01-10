@@ -27,7 +27,6 @@ function createMap(mapdata){
 		this.permaSquares = this.squares.group();
 		this.tempSquares = this.squares.group();
 		this.gridSet = this.g.group().attr({opacity: 0.8});
-		this.$gridSquares = $('.grid-square');
 		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
 		this.markCenter();

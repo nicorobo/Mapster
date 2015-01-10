@@ -1,4 +1,4 @@
-  
+
   //////////////////////////////////////
  ///// Initialize Snap.svg Object /////
 //////////////////////////////////////
@@ -34,6 +34,11 @@ function createMap(mapdata){
 		this.markCenter();
 		this.brush = 'type1';
 		this.cursorSquareCoord = [0, 0];
+		this.type0coords=[];
+		this.type1coords=[];
+		this.type2coords=[];
+		this.type3coords=[];
+
 	}
 
 	  //////////////////////////////////////
@@ -97,6 +102,12 @@ function createMap(mapdata){
 		},
 		eraseCursorBlock:function(){
 			this.tempSquares.clear();
+		},
+		colorSquares: function(squares){
+
+		},
+		colorArray: function(coordinates){
+
 		}
 	}
 
@@ -115,10 +126,10 @@ function createMap(mapdata){
 	var $themap = $mapContainer.find('svg');
 	var $controlHandle = $('#control-handle');
 	var $controlPanel = $('#control-panel');
-	var $coordX = $('#square-coordX')
-	var $coordY = $('#square-coordY')
-	var mapWidth = $themap.width();
-	var mapHeight = $themap.height();
+	var $coordX = $('#square-coordX');
+	var $coordY = $('#square-coordY');
+	var mapWidth = window.innerWidth;
+	var mapHeight = window.innerHeight;
 
 	  //////////////////////////////////////
 	 //////////// Panzoom.js //////////////
@@ -155,8 +166,8 @@ function createMap(mapdata){
 	//Reset dimensions on resize for panzoom.
 	$(window).on('resize', function() {
 	  	$themap.panzoom('resetDimensions');
-	 	mapWidth = $themap.width();
-		mapHeight = $themap.height();
+		mapWidth = window.innerWidth;
+		mapHeight = window.innerHeight;
 	});
 
 	//Ensures the control handle remains green on drag.
@@ -171,7 +182,7 @@ function createMap(mapdata){
 	 /////////// Control Panel ////////////
 	//////////////////////////////////////
 
-	// Buttons
+	// Grid Creation
 
 		$controlPanel.on('click', '#create-grid-button', createGrid)
 					 .on('click', '#remove-grid-button', removeGrid)
@@ -190,30 +201,14 @@ function createMap(mapdata){
 		}
 
 		function hideGrid(){
-			map.$gridSquares.hide();
+			map.$gridLines.hide();
 		}
 
 		function showGrid(){
-			map.$gridSquares.show();
+			map.$gridLines.show();
 		}
 
-	// Coordinates
-
-		$themap.on('mouseover', '.grid-square', readCoords);
-		$themap.on('mouseout', '.grid-square', emptyCoords);
-
-		function emptyCoords(){
-			$coordX.text(' ');
-			$coordY.text(' ');
-		}
-
-		function readCoords(){
-			var coords =  $(this).attr('id').slice(6).split('-');
-			$coordX.text(parseInt(coords[0])+1);
-			$coordY.text(parseInt(coords[1])+1);
-		}
-
-	// Grid Coloring
+	// Brush Selection
 
 		$controlPanel.on('click', '#type0-brush', chooseBrush)
 					 .on('click', '#type1-brush', chooseBrush)
@@ -238,15 +233,16 @@ function createMap(mapdata){
 	  //////////////////////////////////////
 	 ////////// Grid Navigation ///////////
 	//////////////////////////////////////
-	$themap.on('mousemove', findCoordinates)
+	$themap.on('mousemove', findCoordinates);
 
 	function findCoordinates(event){
 		if(map.mapArray.length>0){
 			var gridWidth = map.mapArray[0].length;
-			var gridHeight = map.mapArray.length-1;
-			console.log('mapWidth: '+mapWidth+' gridWidth: '+gridWidth+' offsetX: '+event.offsetX);
-			var x = Math.floor(event.offsetX/(mapWidth/gridWidth));
-			var y = Math.floor(event.offsetY/(mapHeight/gridHeight));
+			var gridHeight = map.mapArray.length;
+			var squareSize = mapWidth/gridWidth;
+			var x = Math.floor((event.offsetX-1)/squareSize);
+			var y = Math.floor((event.offsetY-1)/squareSize);			
+
 			if(map.cursorSquareCoord[0]!=x || map.cursorSquareCoord[1]!= y){
 				map.eraseCursorBlock();
 				map.drawCursorBlock([x, y]);
@@ -256,103 +252,5 @@ function createMap(mapdata){
 		}
 	}
 		console.log(map.width);
-
-
-	  //////////////////////////////////////
-	 /////////// Grid Coloring ////////////
-	//////////////////////////////////////
-
-	var multiDrag = false;
-	var brushDrag = false;
-	var didPan = false;
-	var startingCoord;
-	var squaresList = [];
-
-	$themap.on('mousedown','.grid-square', chooseSquareDown);
-	$themap.on('mouseup','.grid-square', chooseSquareUp);
-
-	function chooseSquareDown(event){
-		startingCoord =  $(this).attr('id').slice(6).split('-');
-		squaresList.push(startingCoord);
-			// console.log(squaresList);
-		if(event.shiftKey || event.ctrlKey){
-			$themap.panzoom("disable");
-			$themap.on('mouseover','.grid-square', trackSquares);
-			if(event.shiftKey){
-				multiDrag = true;
-			}else if(event.ctrlKey){
-				brushDrag = true;
-			}
-		}
-	}
-
-	function trackSquares(event){
-		// console.log(squaresList);
-		var currentCoord = $(this).attr('id').slice(6).split('-');
-		if(multiDrag){
-			squaresList = [];
-			// console.log('startX: '+startingCoord[0]+'  startY: '+startingCoord[1]+'  currentX: '+currentCoord[0]+'  currentY: '+currentCoord[1]);
-			var offsetX = 0-(startingCoord[0]-currentCoord[0]);
-			var offsetY = startingCoord[1]-currentCoord[1];
-			// console.log('offsetX: '+offsetX+' offsetY: '+offsetY);
-			if(offsetX>=0 && offsetY>=0){
-				// console.log('quadI');
-				for(var i=0;i<=offsetX; i++){
-					for(var j=0;j>=offsetY*-1; j--){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
-				}
-			} else if(offsetX<=0 && offsetY>=0){
-				// console.log('quadII');
-				for(var i=0;i>=offsetX; i--){
-					for(var j=0;j>=offsetY*-1; j--){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
-				}
-			}  else if(offsetX<=0 && offsetY<=0){
-				// console.log('quadIII');
-				for(var i=0;i>=offsetX; i--){
-					for(var j=0;j<=offsetY*-1; j++){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
-				}
-			} else if(offsetX>=0 && offsetY<=0){
-				// console.log('quadIV');
-				for(var i=0;i<=offsetX; i++){
-					for(var j=0;j<=offsetY*-1; j++){
-						squaresList.push([parseInt(startingCoord[0])+i,parseInt(startingCoord[1])+j]);
-					}
-				}
-			} else{
-				console.log('uh oh');
-			}
-			map.colorSquares(squaresList);
-			// console.log(squaresList);
-		} else if(brushDrag){
-			squaresList.push(currentCoord);
-			map.colorSquares(squaresList);
-		}
-	}
-
-	function chooseSquareUp(event){
-		if(multiDrag || brushDrag){
-			$themap.panzoom("enable");
-			$themap.unbind('mouseover', trackSquares);
-			if(multiDrag){
-				multiDrag = false;
-				console.log('You just multiDragged');
-				map.colorArray(squaresList);
-			} else if(brushDrag){
-				brushDrag = false;
-				console.log('You just brushDragged');
-				map.colorSquares(squaresList);
-				map.colorArray(squaresList);
-			}
-		}  else if(!didPan){
-			map.colorSquares(squaresList);
-			map.colorArray(squaresList);
-		}
-		squaresList = [];
-	}
-
 }
+

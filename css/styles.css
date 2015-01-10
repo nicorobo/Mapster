@@ -60,7 +60,7 @@ body{
 #map-container{
 	width:100%;
 	max-height:100vh;
-	box-sizing: content-box;
+	/*box-sizing: content-box;*/
 }
 svg {
 	-webkit-backface-visibility: initial !important;
@@ -85,7 +85,7 @@ svg {
 .grid-line{
 	/*fill: transparent;*/
 	stroke: rgba(238,238,238, 0.8);
-	stroke-width: 0.6;
+	stroke-width: 0.2;
 }
 .grid-square:hover{
 	fill: rgba(20, 20, 20, 0.8);

@@ -9,21 +9,27 @@
 
 		<div id="control-panel">
 			<div id="control-handle"></div>
+			<div class=" control-label">Grid Width</div>
 			<input type="number" id="grid-dimension-picker" class="control" max="200" min="10" value="20">
+			<div class=" control-label">Grid</div>
 			<div class="orb-row">
 				<button id="create-grid-button" class="control control-orb">C</button>
 				<button id="remove-grid-button" class="control control-orb">R</button>
 				<button id="hide-grid-button" class="control control-orb">H</button>
 				<button id="show-grid-button" class="control control-orb">S</button>
 			</div>
-			Controls
+			<div class=" control-label">Coloring</div>
 			<div class="orb-row">
 				<button id="type0-brush" class="control control-orb brush"></button>
 				<button id="type1-brush" class="control control-orb brush"></button>
 				<button id="type2-brush" class="control control-orb brush"></button>
 				<button id="type3-brush" class="control control-orb brush"></button>
 			</div>
-			Coloring
+			<div class=" control-label">Path Finding</div>
+			<div>
+				<button id="path-start" class="control">Start</button>
+				<div id="path-text">Lets find some paths!</div>
+			</div>
 			<div id="grid-coordinates">
 				<span id="coordX" class="coord">
 					x:<span id="square-coordX"></span>

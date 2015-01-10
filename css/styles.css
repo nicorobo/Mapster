@@ -27,7 +27,7 @@ body{
 	cursor: pointer;
 }
 .control{
-	margin-top:20px;
+	margin-bottom:10px;
 }
 .control-orb{
 	border-radius: 100%;
@@ -40,6 +40,13 @@ body{
 }
 .control-orb:hover{
 	background: lightgreen;
+}
+.control-label{
+	color: white;
+	font-family: monospace;
+	text-align: left;
+	margin: 5px 0 5px 10px;
+	text-decoration: underline;
 }
 #grid-coordinates{
 	position: absolute;
@@ -119,4 +126,8 @@ svg {
 }
 .cursorBlock{
 	fill:grey;
+}
+#path-text{
+	color: white;
+	font-family: monospace;
 }

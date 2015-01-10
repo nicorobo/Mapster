@@ -401,7 +401,12 @@ function createMap(mapdata){
 	 /////////// Path Finding /////////////
 	//////////////////////////////////////
 
-	
+	$controlPanel.on('click', '#path-start', beginPathfinding);
+
+	function beginPathfinding(){
+		
+	}
+
 
 
 	  //////////////////////////////////////

@@ -24,7 +24,8 @@ function createMap(mapdata){
 		this.g = map;
 		this.mapArray = [];
 		this.squares = this.g.group().attr({opacity: 0.5});
-		this.tempSquares = this.g.group().attr({opacity: 0.5});
+		this.permaSquares = this.squares.group();
+		this.tempSquares = this.squares.group();
 		this.gridSet = this.g.group().attr({opacity: 0.8});
 		this.$gridSquares = $('.grid-square');
 		this.$gridLines = $('.grid-line');
@@ -32,11 +33,6 @@ function createMap(mapdata){
 		this.markCenter();
 		this.brush = 'type1';
 		this.currentCoord = [0, 0];
-		this.type0coords=[];
-		this.type1coords=[];
-		this.type2coords=[];
-		this.type3coords=[];
-
 	}
 
 	  //////////////////////////////////////
@@ -106,15 +102,25 @@ function createMap(mapdata){
 		eraseCursorBlock:function(){
 			this.tempSquares.clear();
 		},
-		colorSquares: function(squares){
-
-		},
 		colorArray: function(coordinates){
-
+			var type = parseInt(this.brush.slice(4));
+			for(var i=0; i<=coordinates.length-1; i++){
+				var current = coordinates[i];
+				this.mapArray[current[1]][current[0]] = type;
+			}
+		},
+		colorSquares: function(coordinates){
+			this.tempSquares.clear();
+			var pixels = this.getTopLeftPixels(coordinates);
+			var squareWidth = this.squareWidthSVG();
+			this.permaSquares.rect(pixels[0], pixels[1], squareWidth, squareWidth).attr({class: this.brush});
 		},
 		multiDragDisplay: function(startingCoord){
 			this.tempSquares.clear();
 			this.drawRect(startingCoord, this.currentCoord, this.tempSquares, false);
+		},
+		multiDrag: function(startingCoord, endingCoord){
+			this.drawRect(startingCoord, endingCoord, this.permaSquares, true)
 		},
 		drawRect: function(startingCoord, endingCoord, canvas, permanent){
 			var offsetX = startingCoord[0]-endingCoord[0]
@@ -125,31 +131,34 @@ function createMap(mapdata){
 			// rectangles root at top left
 			if(toRight && toBelow){
 				var pixels = this.getTopLeftPixels(startingCoord);
-				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
 				canvas.rect(pixels[0], pixels[1], ((-1)*offsetX+1)*squareWidth, ((-1)*offsetY+1)*squareWidth).attr({class:this.brush});
 			}
 			// rectangles root at top right
 			if(toRight && !toBelow){
 				var pixelX = this.getTopLeftPixels(startingCoord)[0];
 				var pixelY = this.getTopRightPixels(endingCoord)[1];
-				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
 				canvas.rect(pixelX, pixelY, ((-1)*offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
 			}
 			// rectangles root at top left
 			if(!toRight && toBelow){
 				var pixelX = this.getBottomLeftPixels(endingCoord)[0];
 				var pixelY = this.getTopLeftPixels(startingCoord)[1];
-				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
 				canvas.rect(pixelX, pixelY, (offsetX+1)*squareWidth, ((-1)*offsetY+1)*squareWidth).attr({class:this.brush});
 			}
 			// rectangles root at top right
 			if(!toRight && !toBelow){
 				var pixels = this.getTopLeftPixels(endingCoord);
-				console.log("offsetX: "+offsetX+" offsetY: "+ offsetY);
 				canvas.rect(pixels[0], pixels[1], (offsetX+1)*squareWidth, (offsetY+1)*squareWidth).attr({class:this.brush});
 			}
 			if(permanent){
-				
+				var type = parseInt(this.brush.slice(4));
+				var startingX = Math.min(startingCoord[0],endingCoord[0]);
+				var startingY = Math.min(startingCoord[1],endingCoord[1]);
+				for(var i=0; i<=Math.abs(offsetY); i++){
+					for(var j=0; j<=Math.abs(offsetX); j++){
+						this.mapArray[startingY+i][startingX+j] = type;
+					}
+				}
 			}
 		},
 		getTopLeftPixels: function(coordinates){
@@ -171,7 +180,7 @@ function createMap(mapdata){
 			var x = (coordinates[0]+1)*this.squareWidthSVG();
 			var y = (coordinates[1]+1)*this.squareWidthSVG();
 			return [x, y];
-		},
+		}
 	}
 
 	  //////////////////////////////////////
@@ -322,7 +331,7 @@ function createMap(mapdata){
 	var didPan = false;
 	var multiDrag = false;
 	var brushDrag = false;
-	var possibleBlocks = [];
+	var blocksInProgress = [];
 
 	$themap.on('mousedown', mapMousedown);
 	$themap.on('mouseup', mapMouseup);
@@ -330,8 +339,8 @@ function createMap(mapdata){
 	function mapMousedown(event){
 		if(actOnGrid()){
 			event.preventDefault();
-			possibleBlocks = [];
-			possibleBlocks.push(map.currentCoord);
+			blocksInProgress = [];
+			blocksInProgress.push(map.currentCoord);
 			if(event.shiftKey || event.ctrlKey){
 				$themap.panzoom('option', 'disablePan', true);
 				$themap.panzoom('option', 'disableZoom', true);
@@ -341,6 +350,8 @@ function createMap(mapdata){
 				}
 				else if(event.ctrlKey){
 					brushDrag = true;
+					map.colorSquares(blocksInProgress[0]);
+					$themap.on('mousemove', brushDragging);
 				}
 			}
 		}
@@ -352,20 +363,36 @@ function createMap(mapdata){
 			$themap.panzoom('option', 'disableZoom', false);
 			if(multiDrag){
 				$themap.unbind('mousemove', multiDragging);
+				map.multiDrag(blocksInProgress[0], map.currentCoord);
 				multiDrag = false;
 			}
 			else if(brushDrag){
+				$themap.unbind('mousemove', brushDragging);
+				map.colorArray(blocksInProgress);
 				brushDrag = false;
 			}
 			else{
 
 			}
-			map.tempSquares.clear();
 		}
 	}
-
+	function brushDragging(){
+		if(arraysMatch(map.currentCoord, blocksInProgress[blocksInProgress.length-1])) return false;
+		blocksInProgress.push(map.currentCoord);
+		map.colorSquares(blocksInProgress[blocksInProgress.length-1]);
+	}
 	function multiDragging(){
-		map.multiDragDisplay(possibleBlocks[0]);
+		map.multiDragDisplay(blocksInProgress[0]);
+	}
+
+	function arraysMatch(a, b){
+		if(a === b) return true;
+		if(a== null || b == null) return false;
+		if(a.length != b.length) return false;
+		for(var i=0; i<a.length; i++){
+			if(a[i] != b[i]) return false;
+		}
+		return true;
 	}
 
 

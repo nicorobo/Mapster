@@ -19,6 +19,7 @@ body{
 	width:30px;
 	border-radius: 100%;
 	background: salmon;
+	z-index: 500;
 	margin-right: -15px;
 	margin-top: -15px;
 }
@@ -91,8 +92,8 @@ svg {
 }
 .grid-line{
 	/*fill: transparent;*/
-	stroke: rgb(0, 0, 0);
-	stroke-width: 0.3;
+	stroke: rgb(238,238,238);
+	stroke-width: 0.1;
 }
 #svg-background{
 	fill:white;
@@ -127,13 +128,13 @@ svg {
 .cursor-block{
 	fill:grey;
 }
-#path-text{
+#path-text,label{
 	color: white;
 	font-family: monospace;
 }
 .path{
-	fill: transparent;
-	stroke: black;
+	fill: none;
+	stroke: #444;
 	stroke-width: 1;
 }
 .hidden{
@@ -141,7 +142,11 @@ svg {
 }
 .starting-point{
 	fill:lightgreen;
+	stroke: #444;
+	stroke-width:0.8;
 }
 .ending-point{
 	fill:salmon;
+	stroke: #444;
+	stroke-width:0.8;
 }

@@ -85,7 +85,8 @@ var astar = {
 
                 // The g score is the shortest distance from start to current node.
                 // We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-                var gScore = currentNode.g + neighbor.getCost(currentNode),
+                var gScore = currentNode.g + neighbor.getCost(currentNode)* heuristic(currentNode, neighbor),
+                // var gScore = currentNode.g + neighbor.getCost(currentNode) * heuristic(currentNode.pos, neighbor.pos);
                     beenVisited = neighbor.visited;
 
                 if (!beenVisited || gScore < neighbor.g) {
@@ -173,7 +174,7 @@ function Graph(gridIn, options) {
     for (var x = 0; x < gridIn.length; x++) {
         this.grid[x] = [];
 
-        for (var y = 0, row = gridIn[x]; y < row.length; y++) {
+        for (var y = 0; y < gridIn[x].length; y++) {
             var node = new GridNode(x, y, gridIn[y][x]);
             this.grid[x][y] = node;
             this.nodes.push(node);

@@ -26,9 +26,10 @@ function createMap(mapdata){
 		this.squares = this.g.group().attr({opacity: 0.5});
 		this.permaSquares = this.squares.group();
 		this.tempSquares = this.squares.group();
+		this.gridSet = this.g.group().attr({opacity: 0.8});
 		this.path = this.g.group();
 		this.points = this.g.group();
-		this.gridSet = this.g.group().attr({opacity: 0.5});
+		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
 		this.markCenter();
 		this.brush = 'type1';
@@ -71,26 +72,30 @@ function createMap(mapdata){
 			var squareWidth = this.bounding.width/sizeX;
 			var dimX = sizeX;
 			var dimY = sizeY || Math.ceil(this.bounding.height/squareWidth) || sizeX;
+			var type = parseInt(this.brush.slice(4));
 			for(var i=0; i<dimY; i++){
 				var xArr = [];
 				for(var j=0; j<dimX; j++){
-					xArr.push(1);
+					xArr.push(type);
 				}
 				arr.push(xArr);
 			}
 			this.mapArray = arr;
 		},
-		findPath: function(startingCoord, endingCoord){
-			var graph = new Graph(this.mapArray);
-			console.log(graph);
+		findPath: function(startingCoord, endingCoord, diagonal){
+			var graph;
+			var result;
+			if(diagonal) graph = new Graph(this.mapArray, { diagonal: true });
+			else graph = new Graph(this.mapArray);
 			var start = graph.grid[startingCoord[0]][startingCoord[1]];
 			var end = graph.grid[endingCoord[0]][endingCoord[1]];
-    		var result = astar.search(graph, start, end);
+			if(diagonal) result = astar.search(graph, start, end, { heuristic: astar.heuristics.diagonal });
+			else result = astar.search(graph, start, end);
     		var path = [startingCoord];
     		for(node in result){
     			path.push([result[node].x, result[node].y]);
     		}
-    		this.drawPath(path);
+    		if (path.length >= 2) this.drawPath(path);
 		},
 		drawGrid: function(){
 			var squareWidth = this.squareWidthSVG();
@@ -108,6 +113,8 @@ function createMap(mapdata){
 				y = squareWidth*i;
 				this.gridSet.line(0, y, width, y).attr({class: 'grid-line'});
 			}
+			$gridLines = $('.grid-line');
+			this.multiDrag([0,0], [this.mapArray[0].length-1, this.mapArray.length-1]);
 		},
 		changeBrush: function(newBrush){
 			var oldBrush = this.brush;
@@ -189,16 +196,28 @@ function createMap(mapdata){
 			}
 		},
 		drawPath: function(path){
-			var polylineArray = [];
 			var halfSquareWidth = this.squareWidthSVG()/2;
-			for(var i=0; i<path.length; i++){
-				var pixels = this.getTopLeftPixels(path[i]);
-				console.log(halfSquareWidth);
-				polylineArray.push(parseInt(pixels[0]+halfSquareWidth));
-				polylineArray.push(parseInt(pixels[1]+halfSquareWidth));
+			var pathString = 'M';
+			var pixels = this.getTopLeftPixels(path[0]);
+			pathString+=(pixels[0]+halfSquareWidth)+' '+(pixels[1]+halfSquareWidth)+' ';
+			for(var i=1; i<path.length; i++){
+				pixels = this.getTopLeftPixels(path[i]);
+				pathString+='L'+(pixels[0]+halfSquareWidth)+' '+(pixels[1]+halfSquareWidth)+' ';
 			}
-			console.log(polylineArray);
-			this.path.polyline(polylineArray).attr({class: 'path'});
+			var thePath = this.path.path(pathString).attr({class: 'path'});
+			var length = thePath.getTotalLength();
+			thePath.attr({
+				"stroke-dasharray":length+' '+length,
+				"stroke-dashoffset": length
+			}).animate({"stroke-dashoffset": 0}, 1500,mina.easeinout);
+			pixels = this.getTopLeftPixels(path[0]);
+			var endingPointMarker = this.points.circle(pixels[0]+halfSquareWidth, pixels[1]+halfSquareWidth, 3).attr({class: 'ending-point'});
+			setTimeout(function(){
+				Snap.animate(0, length, function( value ) {
+		       	var movePoint = thePath.getPointAtLength( value );
+		       	endingPointMarker.attr({ cx: movePoint.x, cy: movePoint.y }); // move along path via cx & cy attributes
+		    	}, 	1500,mina.easeinout);
+			});
 		},
 		erasePath: function(){
 			this.path.clear();
@@ -404,6 +423,10 @@ function createMap(mapdata){
 		blocksInProgress = [];
 		blocksInProgress.push(map.currentCoord);
 		if(event.shiftKey || event.ctrlKey){
+			// $mapContainer.on('mouseleave', function(){
+			// 	console.log("triggerIT");
+			// 	$themap.trigger('mouseup');
+			// });
 			$themap.panzoom('option', 'disablePan', true);
 			$themap.panzoom('option', 'disableZoom', true);
 			if(event.shiftKey){
@@ -424,6 +447,7 @@ function createMap(mapdata){
 	function mapMouseup(event){
 		if(actOnGrid() && !isPathfinding){
 			if(multiDrag||brushDrag){
+				// $mapContainer.unbind('mouseleave');
 				$themap.panzoom('option', 'disablePan', false);
 				$themap.panzoom('option', 'disableZoom', false);
 				if(multiDrag){
@@ -453,7 +477,7 @@ function createMap(mapdata){
 		blocksInProgress.push(map.currentCoord);
 		map.colorSquares(blocksInProgress[blocksInProgress.length-1]);
 	}
-	function multiDragging(){
+	function multiDragging(event){
 		map.multiDragDisplay(blocksInProgress[0]);
 	}
 
@@ -495,13 +519,13 @@ function createMap(mapdata){
 		finishPathfinding();
 	}
 	function finishPathfinding(){
-		map.drawMarker(endingPoint, 'ending-point');
 		$themap.unbind('click', getEndingPoint);
 		$pathText.text("Awesome! Heres your path.");
 		setTimeout(function(){
 				$pathText.text("Lets find some paths!");
 			}, 2000);
-		map.findPath(startingPoint, endingPoint);
+		var diagonal = $('#diagonal-checkbox').is(':checked');
+		map.findPath(startingPoint, endingPoint, diagonal);
 		isPathfinding = false;
 	}
 

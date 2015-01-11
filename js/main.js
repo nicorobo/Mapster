@@ -27,12 +27,13 @@ function createMap(mapdata){
 		this.permaSquares = this.squares.group();
 		this.tempSquares = this.squares.group();
 		this.path = this.g.group();
-		this.gridSet = this.g.group().attr({opacity: 0.8});
-		this.$gridLines = $('.grid-line');
+		this.points = this.g.group();
+		this.gridSet = this.g.group().attr({opacity: 0.5});
 		this.bounding = this.g.getBBox();
 		this.markCenter();
 		this.brush = 'type1';
 		this.currentCoord = [0, 0];
+		this.hidden = false;
 	}
 
 	  //////////////////////////////////////
@@ -42,6 +43,25 @@ function createMap(mapdata){
 	Mapster.prototype = {
 		markCenter: function(){
 			var center = this.g.circle(this.bounding.cx, this.bounding.cy, 5).attr({fill:'salmon'});
+		},
+		reset: function(){
+			this.permaSquares.clear();
+			this.tempSquares.clear();
+			this.path.clear();
+			this.points.clear();
+			this.gridSet.clear();
+			this.mapArray = [];
+			this.show();
+		},
+		hide: function(){
+			this.squares.addClass('hidden');
+			this.gridSet.addClass('hidden');
+			this.hidden = true;
+		},
+		show: function(){
+			this.squares.removeClass('hidden');
+			this.gridSet.removeClass('hidden');
+			this.hidden = false;
 		},
 		loadArray: function(array){
 			this.mapArray = array;
@@ -66,14 +86,13 @@ function createMap(mapdata){
 			var start = graph.grid[startingCoord[0]][startingCoord[1]];
 			var end = graph.grid[endingCoord[0]][endingCoord[1]];
     		var result = astar.search(graph, start, end);
-    		var path = [];
+    		var path = [startingCoord];
     		for(node in result){
     			path.push([result[node].x, result[node].y]);
     		}
     		this.drawPath(path);
 		},
 		drawGrid: function(){
-			this.removeGrid();
 			var squareWidth = this.squareWidthSVG();
 			var height = this.bounding.height;
 			var width = this.bounding.width;
@@ -89,10 +108,6 @@ function createMap(mapdata){
 				y = squareWidth*i;
 				this.gridSet.line(0, y, width, y).attr({class: 'grid-line'});
 			}
-			this.$gridLines = $('.grid-line');
-		},
-		removeGrid: function(){
-			this.gridSet.clear();
 		},
 		changeBrush: function(newBrush){
 			var oldBrush = this.brush;
@@ -109,7 +124,7 @@ function createMap(mapdata){
 			this.currentCoord = coordinates;
 			var squareWidth = this.squareWidthSVG();
 			var pixels = this.getTopLeftPixels(coordinates);
-			this.tempSquares.rect(pixels[0], pixels[1], squareWidth, squareWidth).attr({class: "cursorBlock"})
+			this.tempSquares.rect(pixels[0], pixels[1], squareWidth, squareWidth).attr({class: "cursor-block"});
 		},
 		eraseCursorBlock:function(){
 			this.tempSquares.clear();
@@ -174,7 +189,6 @@ function createMap(mapdata){
 			}
 		},
 		drawPath: function(path){
-			this.path.clear();
 			var polylineArray = [];
 			var halfSquareWidth = this.squareWidthSVG()/2;
 			for(var i=0; i<path.length; i++){
@@ -185,6 +199,15 @@ function createMap(mapdata){
 			}
 			console.log(polylineArray);
 			this.path.polyline(polylineArray).attr({class: 'path'});
+		},
+		erasePath: function(){
+			this.path.clear();
+			this.points.clear();
+		},
+		drawMarker: function(coordinates, selector){
+			var pixels = this.getTopLeftPixels(coordinates);
+			var halfSquareWidth = this.squareWidthSVG()/2;
+			this.points.circle(pixels[0]+halfSquareWidth, pixels[1]+halfSquareWidth, 3).attr({class: selector});
 		},
 		getTopLeftPixels: function(coordinates){
 			var x = coordinates[0]*this.squareWidthSVG();
@@ -220,6 +243,7 @@ function createMap(mapdata){
 
 	function actOnGrid(){
 		if(!map.mapArray.length>0) return false;
+		if(map.hidden) return false;
 		else return true;
 	}
 
@@ -294,20 +318,21 @@ function createMap(mapdata){
 
 		function createGrid(){
 			var gridDimension = $('#grid-dimension-picker').val();
+			map.reset();
 			map.createArray(gridDimension);
 			map.drawGrid();
 		}
 
 		function removeGrid(){
-			map.removeGrid();
+			map.reset();
 		}
 
 		function hideGrid(){
-			map.$gridLines.hide();
+			map.hide();
 		}
 
 		function showGrid(){
-			map.$gridLines.show();
+			map.show();
 		}
 
 	// Brush Selection
@@ -442,7 +467,15 @@ function createMap(mapdata){
 
 	$controlPanel.on('click', '#path-start', beginPathfinding);
 
-	function beginPathfinding(){		
+	function beginPathfinding(){	
+		if(!actOnGrid()){
+			$pathText.text("Sorry, there must be a grid present.");
+			setTimeout(function(){
+				$pathText.text("Lets find some paths!");
+			}, 2000);
+			return true;
+		}
+		map.erasePath();
 		isPathfinding = true;
 		$pathText.text("Click on your starting point.");
 		$themap.on('click', getStartingPoint);
@@ -452,6 +485,7 @@ function createMap(mapdata){
 		haveStartingPoint();
 	}
 	function haveStartingPoint(){
+		map.drawMarker(startingPoint, 'starting-point');
 		$themap.unbind('click', getStartingPoint);
 		$pathText.text("Now click on your ending point.");
 		$themap.on('click', getEndingPoint);
@@ -461,8 +495,12 @@ function createMap(mapdata){
 		finishPathfinding();
 	}
 	function finishPathfinding(){
+		map.drawMarker(endingPoint, 'ending-point');
 		$themap.unbind('click', getEndingPoint);
 		$pathText.text("Awesome! Heres your path.");
+		setTimeout(function(){
+				$pathText.text("Lets find some paths!");
+			}, 2000);
 		map.findPath(startingPoint, endingPoint);
 		isPathfinding = false;
 	}

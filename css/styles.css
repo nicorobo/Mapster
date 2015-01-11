@@ -91,8 +91,8 @@ svg {
 }
 .grid-line{
 	/*fill: transparent;*/
-	stroke: rgb(238,238,238);
-	stroke-width: 0.2;
+	stroke: rgb(0, 0, 0);
+	stroke-width: 0.3;
 }
 #svg-background{
 	fill:white;
@@ -124,7 +124,7 @@ svg {
 .brush:hover{
 	border: 2px solid white;
 }
-.cursorBlock{
+.cursor-block{
 	fill:grey;
 }
 #path-text{
@@ -135,4 +135,13 @@ svg {
 	fill: transparent;
 	stroke: black;
 	stroke-width: 1;
+}
+.hidden{
+	display: none;
+}
+.starting-point{
+	fill:lightgreen;
+}
+.ending-point{
+	fill:salmon;
 }

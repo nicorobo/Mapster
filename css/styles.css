@@ -131,3 +131,8 @@ svg {
 	color: white;
 	font-family: monospace;
 }
+.path{
+	fill: transparent;
+	stroke: black;
+	stroke-width: 1;
+}

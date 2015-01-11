@@ -26,6 +26,7 @@ function createMap(mapdata){
 		this.squares = this.g.group().attr({opacity: 0.5});
 		this.permaSquares = this.squares.group();
 		this.tempSquares = this.squares.group();
+		this.path = this.g.group();
 		this.gridSet = this.g.group().attr({opacity: 0.8});
 		this.$gridLines = $('.grid-line');
 		this.bounding = this.g.getBBox();
@@ -68,8 +69,8 @@ function createMap(mapdata){
     		var path = [];
     		for(node in result){
     			path.push([result[node].x, result[node].y]);
-    			this.colorSquares([result[node].x, result[node].y]);
     		}
+    		this.drawPath(path);
 		},
 		drawGrid: function(){
 			this.removeGrid();
@@ -172,6 +173,19 @@ function createMap(mapdata){
 				}
 			}
 		},
+		drawPath: function(path){
+			this.path.clear();
+			var polylineArray = [];
+			var halfSquareWidth = this.squareWidthSVG()/2;
+			for(var i=0; i<path.length; i++){
+				var pixels = this.getTopLeftPixels(path[i]);
+				console.log(halfSquareWidth);
+				polylineArray.push(parseInt(pixels[0]+halfSquareWidth));
+				polylineArray.push(parseInt(pixels[1]+halfSquareWidth));
+			}
+			console.log(polylineArray);
+			this.path.polyline(polylineArray).attr({class: 'path'});
+		},
 		getTopLeftPixels: function(coordinates){
 			var x = coordinates[0]*this.squareWidthSVG();
 			var y = coordinates[1]*this.squareWidthSVG();
@@ -191,6 +205,9 @@ function createMap(mapdata){
 			var x = (coordinates[0]+1)*this.squareWidthSVG();
 			var y = (coordinates[1]+1)*this.squareWidthSVG();
 			return [x, y];
+		},
+		setSquareOpacity: function(newOpacity){
+			this.squares.attr({opacity: newOpacity});
 		}
 	}
 
@@ -312,6 +329,13 @@ function createMap(mapdata){
 			var oldBrush = map.changeBrush(brush);
 			$('#'+oldBrush+'-brush').css('border', '');
 			$('#'+brush+'-brush').css('border', '2px solid white');
+		}
+	// Opacity
+
+		$controlPanel.on('input', '#opacity-slider', changeOpacity);
+		function changeOpacity(){
+			var opacity = $(this).val();
+			map.setSquareOpacity(opacity);
 		}
 
 
